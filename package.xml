@@ -1,0 +1,43 @@
+<package>
+  <name>ros-arnl</name>
+  <version>0.0.0</version>
+  <description>
+    Provides a ROS interface for Adept MobileRobots ARNL navigation softare.
+  </description>
+  <maintainer email="reed.hedges@aedpt.com">Reed Hedges</maintainer>
+  <author>Adept MobileRbots</author>
+  <license> 
+Copyright (c) 2014 Adept Technology Inc.
+All rights reserved.  
+See LICENSE.txt for ros-arnl license terms.
+See /usr/local/Arnl/LICENSE.txt for ARNL library license terms.
+   </license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <!--
+  <test_depend>roscpp</test_depend>
+  <test_depend>nav_msgs</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+  <test_depend>sensor_msgs</test_depend>
+  <test_depend>tf</test_depend> 
+  -->
+
+  <export>
+
+  </export>
+</package>
