@@ -1,10 +1,9 @@
 # http://ros.org/doc/groovy/api/catkin/html/user_guide/supposed.html
 cmake_minimum_required(VERSION 2.8.3)
-project(ros-arnl)
+project(rosarnl)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs sensor_msgs tf
-  dynamic_reconfigure)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf)
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
@@ -40,27 +39,32 @@ find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geome
 find_package(Boost REQUIRED COMPONENTS thread)
 include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
 
-include_directories( /usr/local/Arnl/include)
-link_directories(/usr/local/Arnl/lib)
+IF(DEFINED ENV{ARNL})
+  message("Warning: Using ARNL environment variable as location of ARNL include and lib directories: $ENV{ARNL}")
+  include_directories( $ENV{ARNL}/include $ENV{ARNL}/include/Aria $ENV{ARNL}/include/ArNetworking)
+  link_directories($ENV{ARNL}/lib)
+ELSE()
+  include_directories( /usr/local/Arnl/include /usr/local/Arnl/include/Aria /usr/local/Arnl/include/ArNetworking)
+  link_directories(/usr/local/Arnl/lib)
+ENDIF()
 
-add_executable(rosarnl rosarnl.cpp RobotMonitor.cpp)
-add_dependencies(ros-arnl ros-arnl_gencfg)
-add_dependencies(ros-arnl ros-arnl_gencpp)
+add_executable(rosarnl_node rosarnl_node.cpp RobotMonitor.cpp)
+#add_dependencies(rosarnl_node rosarnl_gencfg)
+#add_dependencies(rosarnl_node rosarnl_gencpp)
 
-target_link_libraries(ros-arnl ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl ArnlBase ArNetworkingForArnl AriaForArnl pthread dl rt)
-set_target_properties(ros-arnl PROPERTIES COMPILE_FLAGS "-fPIC")
-#set_target_properties(ros-arnl PROPERTIES LINK_FLAGS "-Wl")
+target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl BaseArnl ArNetworkingForArnl AriaForArnl pthread dl rt)
+set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT")
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES geometry_msgs std_msgs
-)
+#generate_messages(
+#  DEPENDENCIES geometry_msgs std_msgs
+#)
 # TODO: fill in what other packages will need to use this package
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    DEPENDS roscpp nav_msgs geometry_msgs sensor_msgs tf
+    DEPENDS roscpp nav_msgs geometry_msgs tf
 )
 
 #############
@@ -70,7 +74,7 @@ catkin_package(
 ## Mark executables and/or libraries for installation
 install(
   TARGETS 
-    ros-arnl
+    rosarnl_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

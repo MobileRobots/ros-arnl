@@ -1,7 +1,18 @@
-ros-arnl
+rosarnl
 ========
 
-Provides ROS interface to basic ARNL features. Requires ARNL and ArnlBase to be installed separately.
+The rosarnl package contains a ROS node also called rosarnl which provides a
+ROS interface to basic ARNL features. Requires ARNL and ArnlBase to be
+installed separately, they cannot be automatically installed by rosdep/catkin.
+ 
+In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
+and configured via MobileEyes or other ArNetworking clients. Use MobileEyes
+to perform scanning for map generation, and use Mapper3 to process the scan
+and upload the map to ARNL.
+
+rosarnl is self-contained. It does not depend on any other ROS nodes. It will
+connect directly to the robot and laser rangefinder(s), according to ARNL's
+robot parameters.
 
 The rosarnl node provides a subset of the standard ROS navigation topic
 interface:
@@ -17,11 +28,6 @@ interface:
 
 Transform (tf) data are provided for the robot base in the map
  and the laser scan.
- 
-In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
-and configured via MobileEyes or other ArNetworking clients. Use MobileEyes
-to perform scanning for map generation, and use Mapper3 to process the scan
-and upload the map to ARNL.
 
 This is intended for simple operation of ARNL navigation, and as a base for
 further features to be added.

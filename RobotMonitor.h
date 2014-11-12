@@ -1,8 +1,8 @@
 #ifndef _ROSARNL_ROBOTMONITOR_H_
 #define _ROSARNL_ROBOTMONITOR_H_ 
 
-#include "Aria.h"
-#include "ArNetworking.h"
+#include "Aria/Aria.h"
+#include "ArNetworking/ArNetworking.h"
 
 class RobotMonitor {
 protected:
