@@ -48,12 +48,12 @@ ELSE()
   link_directories(/usr/local/Arnl/lib)
 ENDIF()
 
-add_executable(rosarnl_node rosarnl_node.cpp RobotMonitor.cpp)
+add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp)
 #add_dependencies(rosarnl_node rosarnl_gencfg)
 #add_dependencies(rosarnl_node rosarnl_gencpp)
 
 target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl BaseArnl ArNetworkingForArnl AriaForArnl pthread dl rt)
-set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT")
+set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
 
 ## Generate added messages and services with any dependencies listed here
 #generate_messages(
