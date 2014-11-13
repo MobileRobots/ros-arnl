@@ -40,8 +40,11 @@ class RosArnlNode
 
   protected:
     ros::NodeHandle n;
+    ArnlSystem &arnl;
 
     ArFunctorC<RosArnlNode> myPublishCB;
+
+    ArPose rosPoseToArPose(const geometry_msgs::Pose& p);
 
     ros::ServiceServer enable_srv;
     ros::ServiceServer disable_srv;
@@ -61,23 +64,19 @@ class RosArnlNode
     ros::ServiceServer global_localization_srv;
     bool global_localization_srv_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
-    //std::string serial_port;
+    // just request a goal, no actionlib interface:
+    ros::Subscriber simple_goal_sub;
+    void simple_goal_sub_cb(const geometry_msgs::PoseStampedConstPtr &msg);
 
-    ArnlSystem &arnl;
 
 };
 
 
 RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
-  myPublishCB(this, &RosArnlNode::publish), 
-  arnl(arnlsys)
+  arnl(arnlsys),
+  myPublishCB(this, &RosArnlNode::publish)
 {
-  // read in config options
   n = nh;
-
-  //n.param( "port", serial_port, std::string("/dev/ttyUSB0") );
-  //ROS_INFO( "rosarnl: using port: [%s]", serial_port.c_str() );
-
 
   // Figure out what frame_id's to use. if a tf_prefix param is specified,
   // it will be added to the beginning of the frame_ids.
@@ -106,9 +105,9 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   
   global_localization_srv = n.advertiseService("global_localization", &RosArnlNode::global_localization_srv_cb, this);
 
-  initialpose_sub = n.subscribe("initialpose", 1, (boost::function <void(const
-geometry_msgs::PoseWithCovarianceStampedConstPtr&)>)
-boost::bind(&RosArnlNode::initialpose_sub_cb, this, _1));
+  initialpose_sub = n.subscribe("initialpose", 1, (boost::function <void(const geometry_msgs::PoseWithCovarianceStampedConstPtr&)>) boost::bind(&RosArnlNode::initialpose_sub_cb, this, _1));
+
+  simple_goal_sub = n.subscribe("move_base_simple/goal", 1, (boost::function <void(const geometry_msgs::PoseStampedConstPtr&)>) boost::bind(&RosArnlNode::simple_goal_sub_cb, this, _1));
 
   // Publish data triggered by ARIA sensor interpretation task
   arnl.robot->lock();
@@ -212,13 +211,23 @@ bool RosArnlNode::global_localization_srv_cb(std_srvs::Empty::Request& request, 
   return true;
 }
 
+ArPose RosArnlNode::rosPoseToArPose(const geometry_msgs::Pose& p)
+{
+  return ArPose( p.position.x * 1000.0, p.position.y * 1000.0, tf::getYaw(p.orientation) / (M_PI/180.0) );
+}
+
 void RosArnlNode::initialpose_sub_cb(const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
 {
-  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Init localization pose received...");
-  double x = msg->pose.pose.position.x * 1000.0;
-  double y = msg->pose.pose.position.y * 1000.0;
-  double th = tf::getYaw(msg->pose.pose.orientation) / (M_PI/180.0);
-  arnl.locTask->forceUpdatePose(ArPose(x, y, th));
+  ArPose p = rosPoseToArPose(msg->pose.pose);
+  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Init localization pose received %.0fmm, %.0fmm, %.0fdeg", p.getX(), p.getY(), p.getTh());
+  arnl.locTask->forceUpdatePose(p);
+}
+
+void RosArnlNode::simple_goal_sub_cb(const geometry_msgs::PoseStampedConstPtr &msg)
+{
+  ArPose p = rosPoseToArPose(msg->pose);
+  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Received goal %.0fmm, %.0fmm, %.0fdeg", p.getX(), p.getY(), p.getTh());
+  arnl.pathTask->pathPlanToPose(p, true);
 }
 
 void ariaLogHandler(const char *msg, ArLog::LogLevel level)
