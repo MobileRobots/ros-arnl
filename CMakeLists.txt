@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rosarnl)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf actionlib actionlib_msgs)
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
@@ -29,6 +29,11 @@ find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geome
 #  FILES
 #  # TODO: List your msg files here
 #)
+
+add_action_files(
+  DIRECTORY action
+  FILES Arnl.action
+)
 
 #generate_dynamic_reconfigure_options(cfg/....cfg)
 
@@ -56,9 +61,10 @@ target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl B
 set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#  DEPENDENCIES geometry_msgs std_msgs
-#)
+generate_messages(
+  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
+)
+
 # TODO: fill in what other packages will need to use this package
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need

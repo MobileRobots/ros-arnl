@@ -42,6 +42,16 @@ interface:
   which  enable/disable the robot motors.
  * `/rosarnl_node/motors_state`: Subscribe to this topic to receive current
    state of motors as a Bool message which is true if enabled, false if disabled.
+ * `/rosarnl_node/current_goal`: ARNL's most recently requested goal point, as a Pose.
+
+Planned but not yet implemented:
+  * move_base current_goal
+  * status message containing mode, status, and detailed status (from ArNetworking server)
+
+`move_base`-compatible actionlib interface
+------------------------------------------
+Goals can be sent, cancelled, etc to `rosarnl_node/move_base/goal` via actionlib as pose messages,
+similar to `move_base` from the standard ROS navigation stack.
 
 `rostopic` and `rosservice` examples
 ------------------------------------
