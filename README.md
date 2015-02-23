@@ -20,8 +20,11 @@ further features to be added.
 Some ROS navstack interface compatibiliy is provided (see below).  Some tasks
 will need to be performed by MobileEyes and Mapper3 as well. 
 
-See LICENSE.txt for the license terms for this code.  ARNL and ArnlBase are
-provided under their own MobileRobots Individual Software License.
+See LICENSE.txt for the license terms for this code.  Note that it is not
+BSD or GPL, and has additional restrictions on use.
+ARNL and ArnlBase are provided under their own MobileRobots Individual 
+Software License, and you must have purchased ARNL license(s) to use
+the ARNL and ArnlBase libraries.
 
 Topic and service interface
 ---------------------------
