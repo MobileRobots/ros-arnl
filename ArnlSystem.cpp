@@ -119,7 +119,7 @@ ArnlSystem::Error ArnlSystem::setup()
   ArMap *map = new ArMap(fileDir);
   map->setIgnoreEmptyFileName(true);
   map->setIgnoreCase(true);
-  map->setIgnoreBadFile(true);
+  //map->setIgnoreBadFile(true);
 
     
   pathTask = new ArPathPlanningTask (robot, sonarDev, map);
