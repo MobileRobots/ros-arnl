@@ -17,6 +17,9 @@ robot parameters.
 This is intended for simple operation of ARNL navigation, and as a base for
 further features to be added.
 
+Some ROS navstack interface compatibiliy is provided (see below).  Some tasks
+will need to be performed by MobileEyes and Mapper3 as well. 
+
 See LICENSE.txt for the license terms for this code.  ARNL and ArnlBase are
 provided under their own MobileRobots Individual Software License.
 
@@ -47,6 +50,9 @@ interface:
 Planned but not yet implemented:
   * move_base current_goal
   * status message containing mode, status, and detailed status (from ArNetworking server)
+
+The rosarnl node dosen't provide map data or a map reference frame. This may be added
+in the future.
 
 `move_base`-compatible actionlib interface
 ------------------------------------------
@@ -83,6 +89,17 @@ Enable motors if disabled:
 
 tf
 --
-Transform (tf) data are provided for the robot base in the map
- and the laser scan.
+Transform (tf) data are provided for the robot base (in the map).
 
+
+TODO
+----
+
+More testing.  
+
+Provide laser and sonar data.
+Provide teleoperation (velocity) command interface.
+(maybe refactor rosarnl and rosaria to easily extend/incorporate everything from
+rosaria?)
+
+Map?
