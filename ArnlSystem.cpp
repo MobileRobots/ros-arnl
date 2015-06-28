@@ -12,6 +12,9 @@
 
 #include "RobotMonitor.h"
 
+#include "ArServerMode.h"
+
+
 
 ArnlSystem::ArnlSystem(const char *_logprefix) : 
     robot(0),
@@ -74,7 +77,7 @@ ArnlSystem::Error ArnlSystem::setup()
 
   ArAnalogGyro *gyro = new ArAnalogGyro(robot); // for old robots with separate gyro communication
 
-  ArServerBase *server = new ArServerBase;
+  serverBase = new ArServerBase;
 
   ArServerSimpleOpener *simpleOpener = new ArServerSimpleOpener(argparser);
 
@@ -155,7 +158,7 @@ ArnlSystem::Error ArnlSystem::setup()
 
 
 
-  if (!simpleOpener->open(server, fileDir, 240))
+  if (!simpleOpener->open(serverBase, fileDir, 240))
   {
     ArLog::log(ArLog::Normal, "%sError: Could not open server.", logprefix);
     exit(2);
@@ -184,7 +187,7 @@ ArnlSystem::Error ArnlSystem::setup()
   ArGlobalReplanningRangeDevice *replanDev = new ArGlobalReplanningRangeDevice(pathTask);
 
   
-  ArServerInfoDrawings *drawings = new ArServerInfoDrawings(server);
+  ArServerInfoDrawings *drawings = new ArServerInfoDrawings(serverBase);
   drawings->addRobotsRangeDevices(robot);
   drawings->addRangeDevice(replanDev);
 
@@ -207,46 +210,44 @@ ArnlSystem::Error ArnlSystem::setup()
   );
 
 
-  ArServerHandlerCommands *commands = new ArServerHandlerCommands(server);
+  ArServerHandlerCommands *commands = new ArServerHandlerCommands(serverBase);
 
 
-  new ArServerInfoRobot(server, robot);
-  new ArServerInfoSensor(server, robot);
-  ArServerInfoPath *serverInfoPath = new ArServerInfoPath(server, robot, pathTask);
+  new ArServerInfoRobot(serverBase, robot);
+  new ArServerInfoSensor(serverBase, robot);
+  ArServerInfoPath *serverInfoPath = new ArServerInfoPath(serverBase, robot, pathTask);
   serverInfoPath->addSearchRectangleDrawing(drawings);
   serverInfoPath->addControlCommands(commands);
 
-  new ArServerInfoLocalization(server, robot, locTask);
-  ArServerHandlerLocalization *serverLocHandler = new ArServerHandlerLocalization(server, robot, locTask);
+  new ArServerInfoLocalization(serverBase, robot, locTask);
+  ArServerHandlerLocalization *serverLocHandler = new ArServerHandlerLocalization(serverBase, robot, locTask);
 
-  new ArServerHandlerMap(server, map);
-
+  new ArServerHandlerMap(serverBase, map); 
   new ArServerSimpleComUC(commands, robot);                  
   new ArServerSimpleComMovementLogging(commands, robot); 
   new ArServerSimpleComLogRobotConfig(commands, robot); 
-  new ArServerSimpleServerCommands(commands, server); 
+  new ArServerSimpleServerCommands(commands, serverBase); 
+  new ArServerHandlerCommMonitor(serverBase);
 
-  new ArServerHandlerCommMonitor(server);
-
-  new ArServerHandlerConfig (server, Aria::getConfig(),
+  new ArServerHandlerConfig (serverBase, Aria::getConfig(),
 				      Arnl::getTypicalDefaultParamFileName(),
 				      Aria::getDirectory());
 
 
-  ArServerHandlerPopup *popupServer = new ArServerHandlerPopup(server);
+  ArServerHandlerPopup *popupServer = new ArServerHandlerPopup(serverBase);
 
   new RobotMonitor(robot, popupServer);
 
 
 
-  new ArServerModeGoto (server, robot, pathTask, map);
+  new ArServerModeGoto (serverBase, robot, pathTask, map);
 
 
-  modeStop = new ArServerModeStop(server, robot);
+  modeStop = new ArServerModeStop(serverBase, robot);
 
   new ArSonarAutoDisabler(robot);
 
-  ArServerModeRatioDrive *modeRatioDrive = new ArServerModeRatioDrive(server, robot);  
+  ArServerModeRatioDrive *modeRatioDrive = new ArServerModeRatioDrive(serverBase, robot);  
 
 
   ArActionLost *actionLostRatioDrive = new ArActionLost(locTask, pathTask, modeRatioDrive);
@@ -262,7 +263,7 @@ ArnlSystem::Error ArnlSystem::setup()
   // Automatically add anything from the global info group to the data logger.
   //Aria::getInfoGroup()->addAddStringCallback(dataLogger.getAddStringFunctor());
 
-  ArServerInfoStrings *stringInfo = new ArServerInfoStrings(server);
+  ArServerInfoStrings *stringInfo = new ArServerInfoStrings(serverBase);
   Aria::getInfoGroup()->addAddStringCallback(stringInfo->getAddStringFunctor());
   
   Aria::getInfoGroup()->addStringInt(
@@ -291,7 +292,7 @@ ArnlSystem::Error ArnlSystem::setup()
 
 
   ArServerModeDock *modeDock = NULL;
-  modeDock = ArServerModeDock::createDock(server, robot, locTask, pathTask);
+  modeDock = ArServerModeDock::createDock(serverBase, robot, locTask, pathTask);
   if (modeDock != NULL)
   {
     modeDock->checkDock();
@@ -306,7 +307,7 @@ ArnlSystem::Error ArnlSystem::setup()
 
 
 
-  ArServerHandlerMapping *handlerMapping = new ArServerHandlerMapping(server, robot, firstLaser, 
+  ArServerHandlerMapping *handlerMapping = new ArServerHandlerMapping(serverBase, robot, firstLaser, 
 					fileDir, "", true);
 
   // make laser localization stop while mapping
@@ -358,10 +359,10 @@ ArnlSystem::Error ArnlSystem::setup()
   // Not implemented for Windows yet.
   ArLog::log(ArLog::Terse, "%sfile upload/download services are not implemented for Windows; not enabling them.", logprefix);
 #else
-  new ArServerFileLister (server, fileDir);
-  new ArServerFileToClient (server, fileDir);
-  new ArServerFileFromClient (server, fileDir, "/tmp");
-  new ArServerDeleteFileOnServer (server, fileDir);
+  new ArServerFileLister (serverBase, fileDir);
+  new ArServerFileToClient (serverBase, fileDir);
+  new ArServerFileFromClient (serverBase, fileDir, "/tmp");
+  new ArServerDeleteFileOnServer (serverBase, fileDir);
 #endif
 
   
@@ -421,7 +422,7 @@ ArnlSystem::Error ArnlSystem::setup()
   locTask->localizeRobotAtHomeBlocking();
   
   // Start the networking server's thread
-  server->runAsync();
+  serverBase->runAsync();
 
 
   ArLog::log(ArLog::Normal, "%sARNL server is now running. You may connect with MobileEyes and Mapper3.", logprefix);
@@ -446,5 +447,32 @@ bool ArnlSystem::handleDebugMessage(ArRobotPacket *pkt)
   msg[255] = 0;
   ArLog::log(ArLog::Terse, "Robot Controller Said: %s", msg);
   return true;
+}
+
+
+const char* ArnlSystem::getServerMode() const {
+  return ArServerMode::getActiveModeModeString();
+}
+
+const char* ArnlSystem::getServerStatus() const {
+  return ArServerMode::getActiveModeStatusString();
+}
+
+const char* ArnlSystem::getPathStateName() const
+{
+  switch(pathTask->getState())
+  {
+    case ArPathPlanningTask::NOT_INITIALIZED: return "NOT_INITIALIZED";
+    case ArPathPlanningTask::PLANNING_PATH: return "PLANNING_PATH";
+    case ArPathPlanningTask::MOVING_TO_GOAL: return "MOVING_TO_GOAL";
+    case ArPathPlanningTask::REACHED_GOAL: return "REACHED_GOAL";
+    case ArPathPlanningTask::FAILED_PLAN: return "FAILED_PLAN";
+    case ArPathPlanningTask::FAILED_MOVE: return "FAILED_MOVE";
+    case ArPathPlanningTask::ABORTED_PATHPLAN: return "ABORTED_PATHPLAN";
+    case ArPathPlanningTask::INVALID:
+    default:
+      return "UNKNOWN";
+  }
+  return "UNKNOWN";
 }
 

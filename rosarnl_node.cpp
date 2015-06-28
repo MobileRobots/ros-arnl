@@ -63,6 +63,15 @@ class RosArnlNode
     ros::ServiceServer global_localization_srv;
     bool global_localization_srv_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
+    ros::Publisher arnl_server_mode_pub;
+    ros::Publisher arnl_server_status_pub;
+
+    ros::Publisher arnl_path_state_pub;
+    void arnl_path_state_change_cb();
+
+    std::string lastServerStatus;
+    std::string lastServerMode;
+
     // just request a goal, no actionlib interface:
     ros::Subscriber simple_goal_sub;
     void simple_goal_sub_cb(const geometry_msgs::PoseStampedConstPtr &msg);
@@ -125,6 +134,11 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
 
   initialpose_sub = n.subscribe("initialpose", 1, (boost::function <void(const geometry_msgs::PoseWithCovarianceStampedConstPtr&)>) boost::bind(&RosArnlNode::initialpose_sub_cb, this, _1));
 
+  arnl_server_mode_pub = n.advertise<std_msgs::String>("arnl_server_mode", -1);
+  arnl_server_status_pub = n.advertise<std_msgs::String>("arnl_server_status", -1);
+
+  arnl_path_state_pub = n.advertise<std_msgs::String>("arnl_path_state", -1);
+
   // TODO the move_base and move_bas_simple topics should be in separate node
   // handles?
   simple_goal_sub = n.subscribe("move_base_simple/goal", 1, (boost::function <void(const geometry_msgs::PoseStampedConstPtr&)>) boost::bind(&RosArnlNode::simple_goal_sub_cb, this, _1));
@@ -137,6 +151,7 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   arnl.pathTask->addGoalFailedCB(new ArFunctor1C<RosArnlNode, ArPose>(this, &RosArnlNode::arnl_goal_failed_cb));
   arnl.pathTask->addGoalDoneCB(new ArFunctor1C<RosArnlNode, ArPose>(this, &RosArnlNode::arnl_goal_reached_cb));
   arnl.pathTask->addGoalInterruptedCB(new ArFunctor1C<RosArnlNode, ArPose>(this, &RosArnlNode::arnl_goal_interrupted_cb));
+  arnl.pathTask->addStateChangeCB(new ArFunctorC<RosArnlNode>(this, &RosArnlNode::arnl_path_state_change_cb));
 
 
   // Publish data triggered by ARIA sensor interpretation task
@@ -206,6 +221,23 @@ void RosArnlNode::publish()
     published_motors_state = true;
   }
 
+  if(lastServerStatus != arnl.getServerStatus())
+  {
+    lastServerStatus = arnl.getServerStatus();
+    std_msgs::String msg;
+    msg.data = lastServerStatus;
+    arnl_server_status_pub.publish(msg);
+  }
+
+  if(lastServerMode != arnl.getServerMode())
+  {
+    lastServerMode = arnl.getServerMode();
+    std_msgs::String msg;
+    msg.data = lastServerMode;
+    arnl_server_mode_pub.publish(msg);
+  }
+
+
   ROS_WARN_COND_NAMED((tasktime.mSecSince() > 20), "rosarnl_node", "rosarnl_node: publish aria task took %d ms", tasktime.mSecSince());
 }
 
@@ -239,6 +271,16 @@ bool RosArnlNode::global_localization_srv_cb(std_srvs::Empty::Request& request, 
     ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Error in initial localization.");
   return true;
 }
+
+
+void RosArnlNode::arnl_path_state_change_cb()
+{
+  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: ARNL path planning task state changed to %s", arnl.getPathStateName());
+  std_msgs::String msg;
+  msg.data = arnl.getPathStateName();
+  arnl_path_state_pub.publish(msg);
+}
+
 
 ArPose RosArnlNode::rosPoseToArPose(const geometry_msgs::Pose& p)
 {
@@ -354,6 +396,8 @@ void RosArnlNode::arnl_goal_reached_cb(ArPose p)
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: action: goal succeeded");
     actionServer.setSucceeded(rosarnl::ArnlResult(), "Goal succeeded");
   }
+else
+puts("action not executing");
   arnl_goal_done = true;
 }
 
@@ -375,6 +419,7 @@ void RosArnlNode::arnl_goal_interrupted_cb(ArPose p)
     actionServer.setPreempted();
   }
 }
+
 
 void ariaLogHandler(const char *msg, ArLog::LogLevel level)
 {

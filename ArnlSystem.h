@@ -6,6 +6,7 @@ class ArPathPlanningTask;
 class ArLocalizationTask;
 class ArServerModeStop;
 class ArRobotPacket;
+class ArServerBase;
 
 class ArnlSystem
 {
@@ -29,6 +30,11 @@ class ArnlSystem
     ArPathPlanningTask *pathTask;
     ArLocalizationTask *locTask;
     ArServerModeStop *modeStop;
+    ArServerBase *serverBase;
+
+    const char* getServerMode() const ;
+    const char* getServerStatus() const ;
+    const char* getPathStateName() const ;
 
   protected:
     const char *logprefix;
