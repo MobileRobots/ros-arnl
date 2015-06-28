@@ -88,6 +88,8 @@ Check if motors are enabled:
 Enable motors if disabled:
    rosservice call /rosarnl_node/enable_motors
 
+Send to a goal using goalname:
+  rostopic pub -1 /rosarnl_node/goalname std_msgs/String "GoalName"
 
 
 tf
