@@ -240,7 +240,7 @@ ArnlSystem::Error ArnlSystem::setup()
 
 
 
-  new ArServerModeGoto (serverBase, robot, pathTask, map);
+  modeGoto = new ArServerModeGoto (serverBase, robot, pathTask, map);
 
 
   modeStop = new ArServerModeStop(serverBase, robot);

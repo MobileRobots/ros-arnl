@@ -3,6 +3,7 @@
 #include "Arnl.h"
 #include "ArPathPlanningInterface.h"
 #include "ArLocalizationTask.h"
+#include "ArServerClasses.h"
 
 #include "ArnlSystem.h"
 
@@ -321,14 +322,17 @@ void RosArnlNode::initialpose_sub_cb(const geometry_msgs::PoseWithCovarianceStam
 void RosArnlNode::simple_goal_sub_cb(const geometry_msgs::PoseStampedConstPtr &msg)
 {
   ArPose p = rosPoseToArPose(msg->pose);
+  bool heading = !ArMath::isNan(p.getTh());
   ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Received goal %.0fmm, %.0fmm, %.0fdeg", p.getX(), p.getY(), p.getTh());
-  arnl.pathTask->pathPlanToPose(p, true);
+  //arnl.pathTask->pathPlanToPose(p, true);
+  arnl.modeGoto->gotoPose(p, heading);
 }
 
 void RosArnlNode::goalname_sub_cb(const std_msgs::StringConstPtr &msg)
 {
   ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Received named goal \"%s\"", msg->data.c_str());
-  arnl.pathTask->pathPlanToGoal(msg->data.c_str());
+  //arnl.pathTask->pathPlanToGoal(msg->data.c_str());
+  arnl.modeGoto->gotoGoal(msg->data.c_str());
 }
 
 void RosArnlNode::arnl_new_goal_cb(ArPose arpose)
@@ -353,7 +357,9 @@ void RosArnlNode::execute_action_cb(const move_base_msgs::MoveBaseGoalConstPtr &
   action_executing  = true;
   ArPose goalpose = rosPoseToArPose(goal->target_pose);
   ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: action: planning to goal %.0fmm, %.0fmm, %.0fdeg", goalpose.getX(), goalpose.getY(), goalpose.getTh());
-  arnl.pathTask->pathPlanToPose(goalpose, true);
+  bool heading = !ArMath::isNan(goalpose.getTh());
+  //arnl.pathTask->pathPlanToPose(goalpose, heading);
+  arnl.modeGoto->gotoPose(goalpose, heading);
   arnl_goal_done = false;
   while(n.ok())
   {

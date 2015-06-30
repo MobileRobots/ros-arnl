@@ -5,6 +5,7 @@ class ArRobot;
 class ArPathPlanningTask;
 class ArLocalizationTask;
 class ArServerModeStop;
+class ArServerModeGoto;
 class ArRobotPacket;
 class ArServerBase;
 
@@ -30,6 +31,7 @@ class ArnlSystem
     ArPathPlanningTask *pathTask;
     ArLocalizationTask *locTask;
     ArServerModeStop *modeStop;
+    ArServerModeGoto *modeGoto;
     ArServerBase *serverBase;
 
     const char* getServerMode() const ;

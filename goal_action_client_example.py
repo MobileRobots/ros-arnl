@@ -5,10 +5,11 @@ import rospy
 import actionlib
 import geometry_msgs
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+import tf.transformations
 
 # TODO replace with move_base action definitions?
 
-def goal_action_example():
+def goal_action_example(x, y, yaw = None):
     # Creates the SimpleActionClient
     move_base_client = actionlib.SimpleActionClient('rosarnl_node/move_base', MoveBaseAction)
 
@@ -19,8 +20,12 @@ def goal_action_example():
 
     # Creates a goal to send to the action server.
     pose = geometry_msgs.msg.Pose()
-    pose.position.x = 1.8
-    pose.position.y = 0.0
+    pose.position.x = x
+    pose.position.y = y
+    pose.position.z = 0.0
+    if (yaw != None) :
+      q = tf.transformations.quaternion_from_euler(0, 0, yaw)
+      pose.orientation = geometry_msgs.msg.Quaternion(*q)
     goal = MoveBaseGoal()
     goal.target_pose.pose = pose
     goal.target_pose.header.frame_id = 'map'
@@ -46,7 +51,11 @@ if __name__ == '__main__':
         # Initializes a rospy node so that the SimpleActionClient can
         # publish and subscribe over ROS.
         rospy.init_node('goal_action_client_example')
-        result = goal_action_example()
-        print 'Result'
+        print 'Testing goal (1.8, 0) with no (invalid) headig...'
+        result = goal_action_example(1.8, 0)
+        print 'Testing goal (1.8, 2, 3.14159)...'
+        result = goal_action_example(1.8, 2, 3.14159)
+        print 'Testing goal (1.8, 1, 1.5707)...'
+        result = goal_action_example(1.8, 1, 1.5707)
     except rospy.ROSInterruptException:
         print "program interrupted before completion"
