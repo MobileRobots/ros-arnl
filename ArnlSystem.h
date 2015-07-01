@@ -8,6 +8,7 @@ class ArServerModeStop;
 class ArServerModeGoto;
 class ArRobotPacket;
 class ArServerBase;
+class ArMap;
 
 class ArnlSystem
 {
@@ -33,6 +34,7 @@ class ArnlSystem
     ArServerModeStop *modeStop;
     ArServerModeGoto *modeGoto;
     ArServerBase *serverBase;
+    ArMap *map;
 
     const char* getServerMode() const ;
     const char* getServerStatus() const ;

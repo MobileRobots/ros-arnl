@@ -119,7 +119,7 @@ ArnlSystem::Error ArnlSystem::setup()
   robot->unlock();
 
 
-  ArMap *map = new ArMap(fileDir);
+  map = new ArMap(fileDir);
   map->setIgnoreEmptyFileName(true);
   map->setIgnoreCase(true);
   //map->setIgnoreBadFile(true);
