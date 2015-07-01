@@ -388,16 +388,21 @@ void RosArnlNode::execute_action_cb(const move_base_msgs::MoveBaseGoalConstPtr &
         move_base_msgs::MoveBaseGoalConstPtr newgoal = actionServer.acceptNewGoal();
         goalpose = rosPoseToArPose(newgoal->target_pose);
         ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: action: new goal interrupted current goal.  planning to new goal %.0fmm, %.0fmm, %.0fdeg", goalpose.getX(), goalpose.getY(), goalpose.getTh());
-        arnl.pathTask->pathPlanToPose(goalpose, true);
+        bool heading = !ArMath::isNan(p.getTh());
+        arnl.modeGoto->gotoPose(goalpose, heading);
+      
         // action server will be set to preempted state by arnl interrupt
         // callback.
       }
       else
       {
-        // we were simply asked to just go to "preempted" end state
+        // we were simply asked to just go to "preempted" end state, with no new
+        // goal
         ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: action: forced to preempted, ending execution.");
         actionServer.setPreempted();
         action_executing = false;
+        arnl.modeGoto->deactivate();
+        
         return;
       }
     }
