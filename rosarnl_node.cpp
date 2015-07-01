@@ -56,7 +56,7 @@ class RosArnlNode
     std_msgs::Bool motors_state;
     bool published_motors_state;
 
-    geometry_msgs::PoseWithCovarianceStamped pose;
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
     ros::Publisher pose_pub;
 
     ros::Subscriber initialpose_sub;
@@ -188,17 +188,25 @@ void RosArnlNode::publish()
 
   // convert mm and degrees to position meters and quaternion angle in ros pose
   tf::poseTFToMsg(tf::Transform(tf::createQuaternionFromYaw(pos.getTh()*M_PI/180), tf::Vector3(pos.getX()/1000,
-    pos.getY()/1000, 0)), pose.pose.pose); 
+    pos.getY()/1000, 0)), pose_msg.pose.pose); 
   
-  pose.header.frame_id = "map"; // TODO check this
-  pose.header.stamp = ros::Time::now();
+  pose_msg.header.frame_id = "map"; // TODO check this
+  pose_msg.header.stamp = ros::Time::now();
 
   // TODO add covariance to position
   
   // todo could only publish if robot not stopped (unless arnl has TriggerTime
   // set in which case it might update localization even ifnot moving)
-  pose_pub.publish(pose);
+  pose_pub.publish(pose_msg);
 
+
+  if(action_executing) 
+  {
+puts("feedback");
+    move_base_msgs::MoveBaseFeedback feedback;
+    feedback.base_position.pose = pose_msg.pose.pose;
+    actionServer.publishFeedback(feedback);
+  }
 
 /*
   // publishing transform odom->base_link
@@ -218,7 +226,7 @@ void RosArnlNode::publish()
   bool e = arnl.robot->areMotorsEnabled();
   if(e != motors_state.data || !published_motors_state)
   {
-    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: publishing new motors state %d.", e);
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: publishing new motors state: %s.", e?"yes":"no");
     motors_state.data = e;
     motors_state_pub.publish(motors_state);
     published_motors_state = true;
@@ -241,7 +249,7 @@ void RosArnlNode::publish()
   }
 
 
-  ROS_WARN_COND_NAMED((tasktime.mSecSince() > 20), "rosarnl_node", "rosarnl_node: publish aria task took %d ms", tasktime.mSecSince());
+  ROS_WARN_COND_NAMED((tasktime.mSecSince() > 20), "rosarnl_node", "rosarnl_node: publish aria task took %ld ms", tasktime.mSecSince());
 }
 
 bool RosArnlNode::enable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
@@ -371,6 +379,7 @@ void RosArnlNode::execute_action_cb(const move_base_msgs::MoveBaseGoalConstPtr &
       action_executing = false;
       return;
     }
+
     if(actionServer.isPreemptRequested())
     {
       if(actionServer.isNewGoalAvailable())
@@ -392,6 +401,9 @@ void RosArnlNode::execute_action_cb(const move_base_msgs::MoveBaseGoalConstPtr &
         return;
       }
     }
+
+    // feedback is published in the publish() task callback 
+
   }
   // node is shutting down, n.ok() returned false
   ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: action: node shutting down, setting aborted state and ending execution.");
