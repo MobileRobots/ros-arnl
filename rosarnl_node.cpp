@@ -4,6 +4,7 @@
 #include "ArPathPlanningInterface.h"
 #include "ArLocalizationTask.h"
 #include "ArServerClasses.h"
+#include "ArDocking.h"
 
 #include "ArnlSystem.h"
 
@@ -49,8 +50,15 @@ class RosArnlNode
 
     ros::ServiceServer enable_srv;
     ros::ServiceServer disable_srv;
+    ros::ServiceServer wander_srv;
+    ros::ServiceServer stop_srv;
+    ros::ServiceServer dock_srv;
+
     bool enable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool disable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
     ros::Publisher motors_state_pub;
     std_msgs::Bool motors_state;
@@ -132,7 +140,10 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
 
   enable_srv = n.advertiseService("enable_motors", &RosArnlNode::enable_motors_cb, this);
   disable_srv = n.advertiseService("disable_motors", &RosArnlNode::disable_motors_cb, this);
-  
+  wander_srv = n.advertiseService("wander", &RosArnlNode::wander_cb, this);
+  stop_srv = n.advertiseService("stop", &RosArnlNode::stop_cb, this);
+  dock_srv = n.advertiseService("dock", &RosArnlNode::dock_cb, this);
+
   global_localization_srv = n.advertiseService("global_localization", &RosArnlNode::global_localization_srv_cb, this);
 
   initialpose_sub = n.subscribe("initialpose", 1, (boost::function <void(const geometry_msgs::PoseWithCovarianceStampedConstPtr&)>) boost::bind(&RosArnlNode::initialpose_sub_cb, this, _1));
@@ -274,6 +285,51 @@ bool RosArnlNode::disable_motors_cb(std_srvs::Empty::Request& request, std_srvs:
     return true;
 }
 
+bool RosArnlNode::wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Enable wander mode request.");
+    arnl.robot->lock();
+    if(arnl.robot->isEStopPressed())
+    {
+        ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Warning: Enable wander mode requested, but robot also has E-Stop button pressed. Wander mode will not enable.");
+        arnl.robot->unlock();
+	return true;
+    }
+    arnl.robot->unlock();
+    arnl.modeWander->activate();
+    return true;
+}
+
+bool RosArnlNode::stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Stop request.");
+    if (arnl.modeGoto->isActive())
+        arnl.modeGoto->deactivate();
+    else if (arnl.modeWander->isActive())
+    	arnl.modeWander->deactivate();
+    else if (arnl.modeDock->isActive())
+        arnl.modeDock->deactivate();
+    else
+        ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Nothing to stop");
+
+    return true;
+}
+
+bool RosArnlNode::dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+{
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Docking procedure request.");
+    arnl.robot->lock();
+    if(arnl.robot->isEStopPressed())
+    {
+        ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Warning: Docking procedure requested, but robot also has E-Stop button pressed. Docking procedure will not initiate.");
+        arnl.robot->unlock();
+	return true;
+    }
+    arnl.robot->unlock();
+    arnl.modeDock->dock();
+    return true;
+}
+
 bool RosArnlNode::global_localization_srv_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
   ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Localize init (global_localization service) request...");
@@ -388,7 +444,7 @@ void RosArnlNode::execute_action_cb(const move_base_msgs::MoveBaseGoalConstPtr &
         move_base_msgs::MoveBaseGoalConstPtr newgoal = actionServer.acceptNewGoal();
         goalpose = rosPoseToArPose(newgoal->target_pose);
         ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: action: new goal interrupted current goal.  planning to new goal %.0fmm, %.0fmm, %.0fdeg", goalpose.getX(), goalpose.getY(), goalpose.getTh());
-        bool heading = !ArMath::isNan(p.getTh());
+        bool heading = !ArMath::isNan(goalpose.getTh());
         arnl.modeGoto->gotoPose(goalpose, heading);
       
         // action server will be set to preempted state by arnl interrupt

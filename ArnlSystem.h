@@ -6,6 +6,8 @@ class ArPathPlanningTask;
 class ArLocalizationTask;
 class ArServerModeStop;
 class ArServerModeGoto;
+class ArServerModeWander; //
+class ArServerModeDock; //
 class ArRobotPacket;
 class ArServerBase;
 class ArMap;
@@ -33,6 +35,8 @@ class ArnlSystem
     ArLocalizationTask *locTask;
     ArServerModeStop *modeStop;
     ArServerModeGoto *modeGoto;
+    ArServerModeWander *modeWander; //
+    ArServerModeDock *modeDock; //
     ArServerBase *serverBase;
     ArMap *map;
 
