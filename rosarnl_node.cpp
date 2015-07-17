@@ -303,15 +303,7 @@ bool RosArnlNode::wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::
 bool RosArnlNode::stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Stop request.");
-    if (arnl.modeGoto->isActive())
-        arnl.modeGoto->deactivate();
-    else if (arnl.modeWander->isActive())
-    	arnl.modeWander->deactivate();
-    else if (arnl.modeDock->isActive())
-        arnl.modeDock->deactivate();
-    else
-        ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Nothing to stop");
-
+    arnl.modeStop->activate();
     return true;
 }
 
