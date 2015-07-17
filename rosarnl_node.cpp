@@ -103,6 +103,14 @@ class RosArnlNode
     void arnl_goal_failed_cb(ArPose p);
     void arnl_goal_interrupted_cb(ArPose p);
     
+    // If robot has e--top button pressed, print a warning and return true. Otherwise return false.
+    bool check_estop(const char *s) {
+        arnl.robot->lock();
+        bool e = arnl.robot->isEStopPressed();
+        arnl.robot->unlock();
+        if(e) ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Warning: Robot e-stop button pressed, cannot %s", s);
+        return e;
+    }
 
 };
 
@@ -267,8 +275,7 @@ bool RosArnlNode::enable_motors_cb(std_srvs::Empty::Request& request, std_srvs::
 {
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Enable motors request.");
     arnl.robot->lock();
-    if(arnl.robot->isEStopPressed())
-        ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Warning: Enable motors requested, but robot also has E-Stop button pressed. Motors will not enable.");
+    check_estop("enable motors");
     arnl.robot->enableMotors();
     arnl.robot->unlock();
 	// todo could wait and see if motors do become enabled, and send a response with an error flag if not
@@ -288,14 +295,7 @@ bool RosArnlNode::disable_motors_cb(std_srvs::Empty::Request& request, std_srvs:
 bool RosArnlNode::wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Enable wander mode request.");
-    arnl.robot->lock();
-    if(arnl.robot->isEStopPressed())
-    {
-        ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Warning: Enable wander mode requested, but robot also has E-Stop button pressed. Wander mode will not enable.");
-        arnl.robot->unlock();
-	return true;
-    }
-    arnl.robot->unlock();
+    check_estop("enter wander mode");
     arnl.modeWander->activate();
     return true;
 }
@@ -310,15 +310,8 @@ bool RosArnlNode::stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Re
 bool RosArnlNode::dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Docking procedure request.");
-    arnl.robot->lock();
-    if(arnl.robot->isEStopPressed())
-    {
-        ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Warning: Docking procedure requested, but robot also has E-Stop button pressed. Docking procedure will not initiate.");
-        arnl.robot->unlock();
-	return true;
-    }
-    arnl.robot->unlock();
-    arnl.modeDock->dock();
+    if(!check_estop("dock"))
+        arnl.modeDock->dock();
     return true;
 }
 
