@@ -221,7 +221,6 @@ void RosArnlNode::publish()
 
   if(action_executing) 
   {
-puts("feedback");
     move_base_msgs::MoveBaseFeedback feedback;
     feedback.base_position.pose = pose_msg.pose.pose;
     actionServer.publishFeedback(feedback);
