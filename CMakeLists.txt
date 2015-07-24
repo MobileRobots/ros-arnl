@@ -30,11 +30,6 @@ find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geome
 #  # TODO: List your msg files here
 #)
 
-add_action_files(
-  DIRECTORY action
-  FILES Arnl.action
-)
-
 #generate_dynamic_reconfigure_options(cfg/....cfg)
 
 #common commands for building c++ executables and libraries
@@ -61,9 +56,9 @@ target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl B
 set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
-)
+#generate_messages(
+#  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
+#)
 
 # TODO: fill in what other packages will need to use this package
 ## LIBRARIES: libraries you create in this project that dependent projects also need
