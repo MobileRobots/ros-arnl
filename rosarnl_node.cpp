@@ -250,17 +250,19 @@ void RosArnlNode::publish()
     published_motors_state = true;
   }
 
-  if(lastServerStatus != arnl.getServerStatus())
+  const char *s = arnl.getServerStatus();
+  if(s && lastServerStatus != s)
   {
-    lastServerStatus = arnl.getServerStatus();
+    lastServerStatus = s;
     std_msgs::String msg;
     msg.data = lastServerStatus;
     arnl_server_status_pub.publish(msg);
   }
 
-  if(lastServerMode != arnl.getServerMode())
+  const char *m = arnl.getServerMode();
+  if(m && lastServerMode != m)
   {
-    lastServerMode = arnl.getServerMode();
+    lastServerMode = m;
     std_msgs::String msg;
     msg.data = lastServerMode;
     arnl_server_mode_pub.publish(msg);
