@@ -294,7 +294,8 @@ bool RosArnlNode::disable_motors_cb(std_srvs::Empty::Request& request, std_srvs:
 bool RosArnlNode::wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Enable wander mode request.");
-    check_estop("enter wander mode");
+    if(check_estop("enter wander mode"))
+      return false;
     arnl.modeWander->activate();
     return true;
 }
@@ -309,8 +310,9 @@ bool RosArnlNode::stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Re
 bool RosArnlNode::dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
     ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Docking procedure request.");
-    if(!check_estop("dock"))
-        arnl.modeDock->dock();
+    if(check_estop("dock"))
+      return false;
+    arnl.modeDock->dock();
     return true;
 }
 
