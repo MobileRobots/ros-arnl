@@ -13,6 +13,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/tf.h>
 #include <tf/transform_listener.h>  
@@ -66,6 +67,15 @@ class RosArnlNode
 
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     ros::Publisher pose_pub;
+
+    geometry_msgs::TransformStamped map_trans;
+    tf::TransformBroadcaster map_broadcaster;
+
+    std::string tf_prefix;
+    std::string frame_id_map;
+    std::string frame_id_base_link;
+    std::string frame_id_bumper;
+    std::string frame_id_sonar;
 
     ros::Subscriber initialpose_sub;
     void initialpose_sub_cb(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg);
@@ -129,16 +139,16 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   //
   // e.g. rosrun ... _tf_prefix:=MyRobot (or equivalently using <param>s in
   // roslaunch files)
-  // will result in the frame_ids being set to /MyRobot/odom etc,
-  // rather than /odom. This is useful for Multi Robot Systems.
+  // will result in the frame_ids being set to /MyRobot/map etc,
+  // rather than /map. This is useful for Multi Robot Systems.
   // See ROS Wiki for further details.
-/*
+
   tf_prefix = tf::getPrefixParam(n);
-  frame_id_odom = tf::resolve(tf_prefix, "odom");
+  frame_id_map = tf::resolve(tf_prefix, "map");
   frame_id_base_link = tf::resolve(tf_prefix, "base_link");
   frame_id_bumper = tf::resolve(tf_prefix, "bumpers_frame");
   frame_id_sonar = tf::resolve(tf_prefix, "sonar_frame");
-*/
+
 
   motors_state_pub = n.advertise<std_msgs::Bool>("motors_state", 1, true /*latch*/ );
   motors_state.data = false;
@@ -226,19 +236,19 @@ void RosArnlNode::publish()
     actionServer.publishFeedback(feedback);
   }
 
-/*
-  // publishing transform odom->base_link
-  odom_trans.header.stamp = ros::Time::now();
-  odom_trans.header.frame_id = frame_id_odom;
-  odom_trans.child_frame_id = frame_id_base_link;
+
+  // publishing transform map->base_link
+  map_trans.header.stamp = ros::Time::now();
+  map_trans.header.frame_id = frame_id_map;
+  map_trans.child_frame_id = frame_id_base_link;
   
-  odom_trans.transform.translation.x = pos.getX()/1000;
-  odom_trans.transform.translation.y = pos.getY()/1000;
-  odom_trans.transform.translation.z = 0.0;
-  odom_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pos.getTh()*M_PI/180);
-  
-  odom_broadcaster.sendTransform(odom_trans);
-*/
+  map_trans.transform.translation.x = pos.getX()/1000;
+  map_trans.transform.translation.y = pos.getY()/1000;
+  map_trans.transform.translation.z = 0.0;
+  map_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pos.getTh()*M_PI/180);
+
+  map_broadcaster.sendTransform(map_trans);
+
   
   // publish motors state if changed
   bool e = arnl.robot->areMotorsEnabled();
