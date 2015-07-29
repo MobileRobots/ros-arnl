@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geome
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE RelWithDebInfo)
 
 #set the default path for built executables to the "bin" directory
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
@@ -35,6 +35,10 @@ find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geome
 #common commands for building c++ executables and libraries
 #add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
+
+catkin_package(
+    DEPENDS roscpp nav_msgs geometry_msgs tf
+)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
@@ -60,13 +64,6 @@ set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT 
 #  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
 #)
 
-# TODO: fill in what other packages will need to use this package
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-    DEPENDS roscpp nav_msgs geometry_msgs tf
-)
 
 #############
 ## Install ##
