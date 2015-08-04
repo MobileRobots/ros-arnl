@@ -132,6 +132,7 @@ ArnlSystem::Error ArnlSystem::setup()
   pathTask = new ArPathPlanningTask (robot, sonarDev, map);
 
   locTask = new ArLocalizationTask (robot, firstLaser, map);
+  creationTime.setToNow();
   
 
   std::map<int, ArLaser *>::iterator laserIt;

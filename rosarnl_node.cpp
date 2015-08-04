@@ -211,6 +211,12 @@ void RosArnlNode::spin()
 
 void RosArnlNode::publish()
 {
+  // todo could only publish if robot not stopped (unless arnl has TriggerTime
+  // set in which case it might update localization even ifnot moving), or
+  // use a callback from arnl for robot pose updates rather than every aria
+  // cycle.  In particular, getting the covariance is a bit computational
+  // intensive and not everyone needs it.
+
   ArTime tasktime;
 
   // Note, this is called via SensorInterpTask callback (myPublishCB, named "ROSPublishingTask"). ArRobot object 'robot' sholud not be locked or unlocked.
@@ -222,8 +228,34 @@ void RosArnlNode::publish()
 
   pose_msg.header.frame_id = "map";
 
-  pose_msg.header.stamp = ros::Time::now();
+  // ARIA/ARNL times are in reference to an arbitrary starting time, not OS
+  // clock, so find the time elapsed between now and last ARNL localization
+  // to adjust the time stamp in ROS time vs. now accordingly.
+  //pose_msg.header.stamp = ros::Time::now();
+  ArTime loctime = arnl.locTask->getLastLocaTime();
+  ArTime arianow;
+  const double dtsec = (double) loctime.mSecSince(arianow) / 1000.0;
+  //printf("localization was %f seconds ago\n", dtsec);
+  pose_msg.header.stamp = ros::Time(ros::Time::now().toSec() - dtsec);
 
+  // TODO if robot is stopped, ARNL won't re-localize (unless TriggerTime option is
+  // configured), so should we just use Time::now() in that case? or do users
+  // expect long ages for poses if robot stopped?
+
+#if 0
+  {
+    printf("ros now is   %12d sec + %12d nsec = %f seconds\n", ros::Time::now().sec, ros::Time::now().nsec, ros::Time::now().toSec());
+    ArTime t;
+    printf("aria now is  %12lu sec + %12lu ms\n", t.getSec(), t.getMSec());
+    printf("arnl loc is  %12lu sec + %12lu ms\n", loctime.getSec(), loctime.getMSec());
+    printf("pose stamp:= %12d sec + %12d nsec = %f seconds\n", pose_msg.header.stamp.sec, pose_msg.header.stamp.nsec, pose_msg.header.stamp.toSec());
+    double d = ros::Time::now().toSec() - pose_msg.header.stamp.toSec();
+    printf("diff is  %12f sec, \n", d);
+    puts("----");
+  }
+#endif
+
+#ifdef ROS_ARNL_CALC_COVAR
   ArMatrix var;
   ArPose meanp;
   if(arnl.locTask->findLocalizationMeanVar(meanp, var))
@@ -254,6 +286,7 @@ void RosArnlNode::publish()
     pose_msg.pose.covariance[6*5 + 1] = ArMath::degToRad(var(2,1)/1000.0);  // yaw*y
     pose_msg.pose.covariance[6*5 + 5] = ArMath::degToRad(var(2,2)); // yaw*yaw
   }
+#endif
   
   pose_pub.publish(pose_msg);
 

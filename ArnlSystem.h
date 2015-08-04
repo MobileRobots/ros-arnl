@@ -1,6 +1,8 @@
 #ifndef _ARNLSYSTEM_H
 #define _ARNLSYSTEM_H
 
+#include "ariaUtil.h"
+
 class ArRobot;
 class ArPathPlanningTask;
 class ArLocalizationTask;
@@ -39,6 +41,7 @@ class ArnlSystem
     ArServerModeDock *modeDock; //
     ArServerBase *serverBase;
     ArMap *map;
+    ArTime creationTime;
 
     const char* getServerMode() const ;
     const char* getServerStatus() const ;
