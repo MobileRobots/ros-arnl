@@ -148,6 +148,8 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   frame_id_bumper = tf::resolve(tf_prefix, "bumpers_frame");
   frame_id_sonar = tf::resolve(tf_prefix, "sonar_frame");
 
+  // initialize to all invalid
+  pose_msg.pose.covariance.assign(-1);
 
   motors_state_pub = n.advertise<std_msgs::Bool>("motors_state", 1, true /*latch*/ );
   motors_state.data = false;
@@ -217,14 +219,42 @@ void RosArnlNode::publish()
   // convert mm and degrees to position meters and quaternion angle in ros pose
   tf::poseTFToMsg(tf::Transform(tf::createQuaternionFromYaw(pos.getTh()*M_PI/180), tf::Vector3(pos.getX()/1000,
     pos.getY()/1000, 0)), pose_msg.pose.pose); 
-  
-  pose_msg.header.frame_id = "map"; // TODO check this
+
+  pose_msg.header.frame_id = "map";
+
   pose_msg.header.stamp = ros::Time::now();
 
-  // TODO add covariance to position
+  ArMatrix var;
+  ArPose meanp;
+  if(arnl.locTask->findLocalizationMeanVar(meanp, var))
+  {
+    // ROS pose covariance is 6x6 with position and orientation in 3
+    // dimensions each x, y, z, roll, pitch, yaw (but placed all in one 1-d
+    // boost::array container)
+    //
+    // ARNL has x, y, yaw (aka theta):
+    //    0     1     2
+    // 0  x*x   x*y   x*yaw
+    // 1  y*x   y*y   y*yaw
+    // 2  yaw*x yaw*y yaw*yaw
+    //
+    // Also convert mm to m and degrees to radians.
+    //
+    // all elements in pose_msg.pose.covariance were initialized to -1 (invalid
+    // marker) in the RosArnlNode constructor, so just update elements that
+    // contain x, y and yaw.
   
-  // todo could only publish if robot not stopped (unless arnl has TriggerTime
-  // set in which case it might update localization even ifnot moving)
+    pose_msg.pose.covariance[6*0 + 0] = var(0,0)/1000.0;  // x/x
+    pose_msg.pose.covariance[6*0 + 1] = var(0,1)/1000.0;  // x/y
+    pose_msg.pose.covariance[6*0 + 5] = ArMath::degToRad(var(0,2)/1000.0);    //x/yaw
+    pose_msg.pose.covariance[6*1 + 0] = var(1,0)/1000.0;  //y/x
+    pose_msg.pose.covariance[6*1 + 1] = var(1,1)/1000.0;  // y/y
+    pose_msg.pose.covariance[6*1 + 5] = ArMath::degToRad(var(1,2)/1000.0);  // y/yaw
+    pose_msg.pose.covariance[6*5 + 0] = ArMath::degToRad(var(2,0)/1000.0);  //yaw/x
+    pose_msg.pose.covariance[6*5 + 1] = ArMath::degToRad(var(2,1)/1000.0);  // yaw*y
+    pose_msg.pose.covariance[6*5 + 5] = ArMath::degToRad(var(2,2)); // yaw*yaw
+  }
+  
   pose_pub.publish(pose_msg);
 
 

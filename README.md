@@ -32,7 +32,11 @@ the ARNL and ArnlBase libraries.
 Topic and service interface
 ---------------------------
 The rosarnl node provides a subset of the standard ROS navigation topic
-interface:
+interface. Note however that by default the topics are prefixed with 
+`/ronarnl_node`.  Make sure to use the `rosarnl_node` topic names, or for
+transparent compatibility with other ros tools, remap them. For example,
+to publish a 2D Nav Goal from rviz, change the topic name in the 2D Nav Goal Tool
+Properties.
  * `/rosarnl_node/move_base_simple/goal`       Publish a PoseStamped message to
     this topic to set a goal. ARNL will begin navigating to this goal if
     possible. 
@@ -56,16 +60,23 @@ interface:
  * `/rosarnl_node/motors_state`: Subscribe to this topic to receive current
    state of motors as a Bool message which is true if enabled, false if disabled.
  * `/rosarnl_node/current_goal`: ARNL's most recently requested goal point, as a Pose.
+ * `/rosarnl_node/arnl_server_mode`: String with the current server mode name
+ * `/rosarnl_node/arnl_server_status`: String with the current server status message
+ * `/rosarnl_node/arnl_path_state`: String name indicating changes to the the ARNL path planner internal  state. See `ArPathPlanningInterface::getState` in the ARNL API Reference documentation
 
-Planned but not yet implemented:
-  * move_base current_goal
-  * status message containing mode, status, and detailed status (from ArNetworking server)
-
-The rosarnl node dosen't provide map data or a map reference frame. This may be added
+The rosarnl node dosen't provide map data. This may be added
 in the future.
+
+Transforms published via `tf`
+-----------------------------
+
+ARNL publishes `tf` messages for transform from `map` to `base_link` using the localized robot pose.
+This is the same as the pose  (`amcl_pose`) relative to the global map frame.
+
 
 `move_base`-compatible actionlib interface
 ------------------------------------------
+
 Goals can be sent, cancelled, etc to `rosarnl_node/move_base/goal` via actionlib as pose messages,
 similar to `move_base` from the standard ROS navigation stack.  The `move_base` action
 message types are used, install `move_base_msgs` for client API (e.g.
