@@ -255,7 +255,7 @@ void RosArnlNode::publish()
   }
 #endif
 
-#ifdef ROS_ARNL_CALC_COVAR
+#ifndef ROS_ARNL_NO_COVARIANCE
   ArMatrix var;
   ArPose meanp;
   if(arnl.locTask->findLocalizationMeanVar(meanp, var))
