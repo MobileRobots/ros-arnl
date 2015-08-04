@@ -91,30 +91,38 @@ To quickly test or try out rosarnl, you can use the `rostopic` tool.
 MobileEyes.
 
 List all available topics in the ROS master:
-  rostopic list
+
+    rostopic list
 
 Trigger initial localization:
+
     rosservice call /rosarnl_node/global_localization
 Check the `rosarnl_node` log and MobileEyes to see if successful.
 
 Monitor current position:
+
     rostopic echo /rosarnl_node/amcl_pose
 
 Send to a goal point using `move_base_simple` interface (no actionlib):
+
     rostopic pub -1 /rosarnl_node/move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 1.0}, orientation: {w: 1.0}}}'
 Check the ARNL status and pose topics, node log, or MobileEyes to see if successful.
 
 Send to a goal point using `move_base actionlib` interface:
+
     rostopic pub -1 /rosarnl_node/move_base/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 1.0}, orientation: {w: 1.0}}}'
 Watch the `/rosarnl_node/move_base/result` topic for status.
 
 Check if motors are enabled:
+
     rostopic echo /rosarnl_node/motors_state
 
 Enable motors if disabled:
+
      rosservice call /rosarnl_node/enable_motors
 
 Send to a goal using goalname:
+
     rostopic pub -1 /rosarnl_node/goalname std_msgs/String "GoalName"
 
 
