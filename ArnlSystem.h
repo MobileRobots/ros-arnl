@@ -42,6 +42,7 @@ class ArnlSystem
     ArServerBase *serverBase;
     ArMap *map;
     ArTime creationTime;
+    ArServerInfoDrawings *drawings;
 
     const char* getServerMode() const ;
     const char* getServerStatus() const ;

@@ -192,7 +192,7 @@ ArnlSystem::Error ArnlSystem::setup()
   ArGlobalReplanningRangeDevice *replanDev = new ArGlobalReplanningRangeDevice(pathTask);
 
   
-  ArServerInfoDrawings *drawings = new ArServerInfoDrawings(serverBase);
+  drawings = new ArServerInfoDrawings(serverBase);
   drawings->addRobotsRangeDevices(robot);
   drawings->addRangeDevice(replanDev);
 
