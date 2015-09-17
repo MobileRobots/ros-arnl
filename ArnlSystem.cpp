@@ -132,6 +132,7 @@ ArnlSystem::Error ArnlSystem::setup()
   pathTask = new ArPathPlanningTask (robot, sonarDev, map);
 
   locTask = new ArLocalizationTask (robot, firstLaser, map);
+  creationTime.setToNow();
   
 
   std::map<int, ArLaser *>::iterator laserIt;
@@ -191,7 +192,7 @@ ArnlSystem::Error ArnlSystem::setup()
   ArGlobalReplanningRangeDevice *replanDev = new ArGlobalReplanningRangeDevice(pathTask);
 
   
-  ArServerInfoDrawings *drawings = new ArServerInfoDrawings(serverBase);
+  drawings = new ArServerInfoDrawings(serverBase);
   drawings->addRobotsRangeDevices(robot);
   drawings->addRangeDevice(replanDev);
 
