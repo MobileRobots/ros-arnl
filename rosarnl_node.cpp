@@ -251,8 +251,9 @@ void RosArnlNode::publish()
   }
 
   const char *s = arnl.getServerStatus();
-  if(s && lastServerStatus != s)
+  if(s != NULL && lastServerStatus != s)
   {
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: publishing now server status: %s", s);
     lastServerStatus = s;
     std_msgs::String msg;
     msg.data = lastServerStatus;
@@ -260,8 +261,9 @@ void RosArnlNode::publish()
   }
 
   const char *m = arnl.getServerMode();
-  if(m && lastServerMode != m)
+  if(m != NULL && lastServerMode != m)
   {
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: publishing now server mode: %s", m);
     lastServerMode = m;
     std_msgs::String msg;
     msg.data = lastServerMode;
