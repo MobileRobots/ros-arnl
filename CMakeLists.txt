@@ -60,7 +60,7 @@ ELSE()
   endif()
 ENDIF()
 
-add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp)
+add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp LaserPublisher.cpp)
 #add_dependencies(rosarnl_node rosarnl_gencfg)
 #add_dependencies(rosarnl_node rosarnl_gencpp)
 
