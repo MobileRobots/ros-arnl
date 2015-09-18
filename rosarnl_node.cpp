@@ -630,8 +630,13 @@ int main( int argc, char** argv )
   for(std::map<int, ArLaser*>::const_iterator i = lasers->begin(); i != lasers->end(); ++i)
   {
     ArLaser *l = i->second;
-    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Creating publisher for laser %s\n", l->getName());
-    new LaserPublisher(l, n);
+    int ln = i->first;
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Creating publisher for laser #%d named %s\n", ln, l->getName());
+    std::string tfname("laser");
+    if(lasers->size() > 1 || ln > 1) // no number if only one laser which is also laser 1
+      tfname += ln; 
+    tfname += "_frame";
+    new LaserPublisher(l, n, true, tfname);
   }
   arnl.robot->unlock();
 
