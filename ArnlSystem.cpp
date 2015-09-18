@@ -4,6 +4,7 @@
 #include "ArnlSystem.h"
 
 #include "Aria/Aria.h"
+#include "ArNetworking/ArNetworking.h"
 #include "Arnl.h"
 #include "ArPathPlanningInterface.h"
 #include "ArLocalizationTask.h"
@@ -12,7 +13,6 @@
 
 #include "RobotMonitor.h"
 
-#include "ArServerMode.h"
 
 
 

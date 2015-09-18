@@ -13,6 +13,7 @@ class ArServerModeDock; //
 class ArRobotPacket;
 class ArServerBase;
 class ArMap;
+class ArServerInfoDrawings;
 
 class ArnlSystem
 {
