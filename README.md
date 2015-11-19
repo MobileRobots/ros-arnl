@@ -1,17 +1,18 @@
 rosarnl
 ========
 
-The rosarnl package contains a ROS node also called rosarnl which provides a
+The rosarnl package contains a ROS node called `rosarnl_node` which provides a
 ROS interface to basic ARNL features. Requires ARNL and ArnlBase to be
 installed separately, they cannot be automatically installed by rosdep/catkin.
  
 In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
 and configured via MobileEyes or other ArNetworking clients simultaneously 
 with the ROS interface. Use MobileEyes to perform scanning for map generation, 
-configure ARNL,and more easily do some tasks such as teleoperation and initial
+configure ARNL, and more easily do some tasks such as teleoperation and initial
 manual localization.  Use Mapper3 to process the scan and upload the map to ARNL.
-See the Adept MobileRobots ARNL/Navigation and robot manuals and reference API
-documentation for more details.
+See the MobileRobots ARNL/Navigation guides, robot manuals, ARNL reference API
+documentation, and documentation at <http://robots.mobilerobots.com> for more details
+on how to use ARNL.
 
 `rosarnl_node` is self-contained. It does not require any other ROS nodes to be
 running. It will connect directly to the robot and laser rangefinder(s), 
@@ -21,22 +22,23 @@ This is intended for simple operation of ARNL navigation, and as a base for
 further features to be added.
 
 Some ROS navstack interface compatibiliy is provided (see below).  Some tasks
-will need to be performed by MobileEyes and Mapper3 as well. 
+will need to be performed by MobileEyes and Mapper3 instead.
 
 See LICENSE.txt for the license terms for this code.  Note that it is not
 BSD or GPL, and has additional restrictions on use.
 ARNL and ArnlBase are provided under their own MobileRobots Individual 
-Software License, and you must have purchased ARNL license(s) to use
-the ARNL and ArnlBase libraries.
+Software License, and you must have purchased ARNL license(s) with
+your robot system in order to use the ARNL and ArnlBase libraries.
 
 Topic and service interface
 ---------------------------
 The rosarnl node provides a subset of the standard ROS navigation topic
-interface. Note however that by default the topics are prefixed with 
+interface (See <http://wiki.ros.org/move_base> and other documentation). 
+Note however that by default the topics are prefixed with 
 `/ronarnl_node`.  Make sure to use the `rosarnl_node` topic names, or for
 transparent compatibility with other ros tools, remap them. For example,
 to publish a 2D Nav Goal from rviz, change the topic name in the 2D Nav Goal Tool
-Properties.
+Properties in rviz.
  * `/rosarnl_node/move_base_simple/goal`       Publish a PoseStamped message to
     this topic to set a goal. ARNL will begin navigating to this goal if
     possible. 
