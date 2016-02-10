@@ -9,7 +9,7 @@ from Adept MobileRobots must be installed  separately, they cannot currently
 be downloaded rosdep/catkin. Download from
 <http://robots.mobilerobots.com/wiki/ARNL>.     "Prerelease" testing packages
 for 1.9.2 can be found at
-<http://robots.mobileroobts.com/ARNL/download/prerelease> and
+<http://robots.mobilerobots.com/ARNL/download/prerelease> and
 <http://robots.mobilerobots.com/BaseArnl/download/prerelease>.
  
 In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
@@ -77,13 +77,26 @@ in the future.
 
 This mode can be used to do short discrete movements of the robot. 
 
- * `/rosarnl_node/jog_position_simple/goal`: Publish a Pose2D message to this topic to move a
+ * `/rosarnl_node/jog_position_simple/goal`: Publish a `geometry_msgs/Pose2D` message to this topic to move a
     short discrete distance in X or Theta (Y is not yet implemented).  Some
     obstacle sensing is attempted, configure in ARNL configuration (parameter file
     or via MobileEyes)
  * `/rosarnl_node/jog_position/goal`: Initiate an Action Server action with a
     new Jog Position mode goal. Result is sent back when finished, cancel if
     interrupted.
+
+### Laser Data
+
+Laser data is published (e.g. to see it in rviz).  Laser connections are 
+configured in the robot parameter file in `/usr/local/Arnl/params`.
+See <>. 
+
+Laser data is published similar to rosaria.
+For each connected laser, `/rosarnl_node/`_lasername_`_pointcloud` and
+`/rosarnl_node/`_lasername_`_laserscan` 
+topics are published with `sensor_msgs/PointCloud` and `sensor_msgs/LaserScan`
+messages respectively, where _lasername_ is ARIA's identifier for the laser.
+For example, `lms2xx_1`, `lms1xx_1`, etc.
  
 ### Misc
 
@@ -156,10 +169,6 @@ Send to a goal using goalname:
     rostopic pub -1 /rosarnl_node/goalname std_msgs/String "GoalName"
 
 
-tf
---
-Transform (tf) data are provided for the robot base (in the map frame).
-
 
 TODO
 ----
@@ -173,3 +182,4 @@ rosaria?)
 
 Provide map.
 
+Are published tf's useful? should they be configurable?
