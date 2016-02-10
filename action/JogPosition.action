@@ -1,0 +1,7 @@
+# goal offset
+geometry_msgs/Pose2D offset
+---
+# no value provided with result
+---
+# feedback, current pose
+geometry_msgs/Pose2D current

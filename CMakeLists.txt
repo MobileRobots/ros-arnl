@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rosarnl)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf actionlib actionlib_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib)
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
@@ -30,6 +30,16 @@ set(ROS_BUILD_TYPE RelWithDebInfo)
 #  # TODO: List your msg files here
 #)
 
+add_action_files(
+  DIRECTORY action
+  FILES JogPosition.action
+)
+
+## Generate added messages and services with any dependencies listed here
+generate_messages(
+  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
+)
+
 #generate_dynamic_reconfigure_options(cfg/....cfg)
 
 #common commands for building c++ executables and libraries
@@ -37,8 +47,10 @@ set(ROS_BUILD_TYPE RelWithDebInfo)
 #target_link_libraries(${PROJECT_NAME} another_library)
 
 catkin_package(
-    DEPENDS roscpp nav_msgs geometry_msgs tf
+    DEPENDS roscpp nav_msgs geometry_msgs tf actionlib_msgs
 )
+
+
 
 find_package(Boost REQUIRED COMPONENTS thread)
 include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
@@ -67,10 +79,6 @@ add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp Las
 target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl BaseArnl ArNetworkingForArnl AriaForArnl pthread dl rt)
 set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
 
-## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
-#)
 
 
 #############

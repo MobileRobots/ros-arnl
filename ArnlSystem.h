@@ -8,12 +8,14 @@ class ArPathPlanningTask;
 class ArLocalizationTask;
 class ArServerModeStop;
 class ArServerModeGoto;
-class ArServerModeWander; //
-class ArServerModeDock; //
+class ArServerModeWander;
+class ArServerModeDock;
 class ArRobotPacket;
 class ArServerBase;
 class ArMap;
 class ArServerInfoDrawings;
+class ArServerModeJogPosition;
+class ArServerModeRatioDrive;
 
 class ArnlSystem
 {
@@ -38,12 +40,14 @@ class ArnlSystem
     ArLocalizationTask *locTask;
     ArServerModeStop *modeStop;
     ArServerModeGoto *modeGoto;
-    ArServerModeWander *modeWander; //
-    ArServerModeDock *modeDock; //
+    ArServerModeWander *modeWander;
+    ArServerModeDock *modeDock;
     ArServerBase *serverBase;
     ArMap *map;
     ArTime creationTime;
     ArServerInfoDrawings *drawings;
+    ArServerModeRatioDrive *modeRatioDrive;
+    ArServerModeJogPosition *modeJogPosition;
 
     const char* getServerMode() const ;
     const char* getServerStatus() const ;

@@ -5,12 +5,14 @@
 #include "ArLocalizationTask.h"
 #include "ArServerClasses.h"
 #include "ArDocking.h"
+#include "ArServerModeJogPosition.h"
 
 #include "ArnlSystem.h"
 #include "LaserPublisher.h"
 
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
@@ -25,6 +27,7 @@
 #include <std_srvs/Empty.h>
 #include <actionlib/server/simple_action_server.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <rosarnl/JogPositionAction.h>
 
 
 class RosArnlNode
@@ -64,6 +67,70 @@ class RosArnlNode
     ros::Publisher motors_state_pub;
     std_msgs::Bool motors_state;
     bool published_motors_state;
+
+    class JogPositionActionServer {
+    public:
+      ros::NodeHandle nh;
+      geometry_msgs::Pose2D goal;
+      geometry_msgs::Pose2D feedback;
+      ArServerModeJogPosition *jogMode;
+      bool executing;
+      actionlib::SimpleActionServer<rosarnl::JogPositionAction> action_server;
+      JogPositionActionServer(ros::NodeHandle& _nh, ArServerModeJogPosition *jm) :
+        nh(_nh),
+        jogMode(jm),
+        executing(false),
+        action_server(nh, "jog_position", boost::bind(&JogPositionActionServer::execute, this, _1), false)
+      {
+      }
+      void start() {
+          action_server.start();
+      }
+      void execute(const rosarnl::JogPositionGoalConstPtr &goal) {
+        ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Executing new Jog Position action goal (%f, %f, %f)\n", goal->offset.x, goal->offset.y, goal->offset.theta);
+        if(goal->offset.x > 0.000001)
+        {
+          jogMode->activate(); // XXX temporary should be automatic in future
+          jogMode->move( goal->offset.x * 1000.0);
+        }
+        if(goal->offset.theta > 0.000001)
+        {
+          jogMode->activate(); // XXX temporary should be automatic in future
+          jogMode->turn( ArMath::radToDeg(goal->offset.theta) );
+        }
+        executing = true;
+      }
+      void check() {
+        if(!executing) return;
+        // todo better to use a deactivate callback instead of calling
+        // isActive() here?
+        if(action_server.isPreemptRequested() || !jogMode->isActive())
+        {
+          ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action preempted or mode changed");
+          if(action_server.isNewGoalAvailable())
+          {
+            execute(action_server.acceptNewGoal());
+            return;
+          }
+          executing = false;
+          action_server.setPreempted();
+          return;
+        }
+        // todo check a timeout?
+        if(jogMode->getDriveAction()->haveAchievedDistance())
+        {
+          ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action goal done");
+          executing = false;
+          action_server.setSucceeded();
+          return;
+        }
+        // todo publish feedback
+        return;
+      }
+    };
+    JogPositionActionServer jog_position_action_server;
+    ros::Subscriber simple_jog_position_sub;
+    void simple_jog_position_sub_cb(const geometry_msgs::Pose2DConstPtr &msg);
 
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     ros::Publisher pose_pub;
@@ -128,6 +195,7 @@ class RosArnlNode
 RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   arnl(arnlsys),
   myPublishCB(this, &RosArnlNode::publish),
+  jog_position_action_server(nh, arnl.modeJogPosition),
   actionServer(nh, "move_base", boost::bind(&RosArnlNode::execute_action_cb, this, _1), false),
   arnl_goal_done(false),
   action_executing(false)
@@ -188,6 +256,8 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   arnl.pathTask->addStateChangeCB(new ArFunctorC<RosArnlNode>(this, &RosArnlNode::arnl_path_state_change_cb));
 
 
+  simple_jog_position_sub = n.subscribe("jog_position_simple/goal", 1, (boost::function <void(const geometry_msgs::Pose2DConstPtr&)>) boost::bind(&RosArnlNode::simple_jog_position_sub_cb, this, _1));
+
   // Publish data triggered by ARIA sensor interpretation task
   arnl.robot->lock();
   arnl.robot->addSensorInterpTask("ROSPublishingTask", 100, &myPublishCB);
@@ -201,6 +271,7 @@ RosArnlNode::~RosArnlNode()
 int RosArnlNode::Setup()
 {
   actionServer.start();
+  jog_position_action_server.start();
   return 0;
 }
 
@@ -299,6 +370,8 @@ void RosArnlNode::publish()
     actionServer.publishFeedback(feedback);
   }
 
+  jog_position_action_server.check();
+
 
   // publishing transform map->base_link
   map_trans.header.stamp = ros::Time::now();
@@ -342,7 +415,6 @@ void RosArnlNode::publish()
     msg.data = lastServerMode;
     arnl_server_mode_pub.publish(msg);
   }
-
 
   ROS_WARN_COND_NAMED((tasktime.mSecSince() > 20), "rosarnl_node", "rosarnl_node: publish aria task took %ld ms", tasktime.mSecSince());
 }
@@ -566,6 +638,21 @@ void RosArnlNode::arnl_goal_interrupted_cb(ArPose p)
   }
 }
 
+
+void RosArnlNode::simple_jog_position_sub_cb(const geometry_msgs::Pose2DConstPtr &msg)
+{
+  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Simple Jog Position goal received on jog_position_simple/goal topic: (%f, %f, %f)\n", msg->x, msg->y, msg->theta);
+  if(msg->x > 0.00001)
+  {
+    arnl.modeJogPosition->activate(); // XXX temporary should be automatic in future
+    arnl.modeJogPosition->move(msg->x * 1000.0);
+  }
+  if(msg->theta > 0.0001)
+  {
+    arnl.modeJogPosition->activate(); // XXX temporary should be automatic in future
+    arnl.modeJogPosition->turn(ArMath::radToDeg(msg->theta));
+  }
+}
 
 void ariaLogHandler(const char *msg, ArLog::LogLevel level)
 {

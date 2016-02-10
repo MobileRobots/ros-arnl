@@ -2,8 +2,12 @@ rosarnl
 ========
 
 The rosarnl package contains a ROS node called `rosarnl_node` which provides a
-ROS interface to basic ARNL features. Requires ARNL and ArnlBase to be
-installed separately, they cannot be automatically installed by rosdep/catkin.
+ROS interface to basic ARNL features. 
+
+rosarnl requires ARNL and ArnlBase 1.9.2 or later to be installed.  The packages 
+from Adept MobileRobots must be installed  separately, they cannot currently 
+be downloaded rosdep/catkin. Download from
+<http://robots.mobilerobots.com/wiki/ARNL>.
  
 In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
 and configured via MobileEyes or other ArNetworking clients simultaneously 
@@ -32,6 +36,9 @@ your robot system in order to use the ARNL and ArnlBase libraries.
 
 Topic and service interface
 ---------------------------
+
+### Autonomous Navigation (path planning and localization):
+
 The rosarnl node provides a subset of the standard ROS navigation topic
 interface (See <http://wiki.ros.org/move_base> and other documentation). 
 Note however that by default the topics are prefixed with 
@@ -57,17 +64,35 @@ Properties in rviz.
    intial localization, assuming robot is either at last known position (as
    stored by ARNL), or at a "home" position in the map. (Note, this differs from
    the `amcl` node, which tries many possible positions across whole map.)
- * `/rosarnl_node/enable_motors` and `/rosarnl_node/disable_motors`: Services
-  which  enable/disable the robot motors.
- * `/rosarnl_node/motors_state`: Subscribe to this topic to receive current
-   state of motors as a Bool message which is true if enabled, false if disabled.
  * `/rosarnl_node/current_goal`: ARNL's most recently requested goal point, as a Pose.
- * `/rosarnl_node/arnl_server_mode`: String with the current server mode name
- * `/rosarnl_node/arnl_server_status`: String with the current server status message
  * `/rosarnl_node/arnl_path_state`: String name indicating changes to the the ARNL path planner internal  state. See `ArPathPlanningInterface::getState` in the ARNL API Reference documentation
 
 The rosarnl node dosen't provide map data. This may be added
 in the future.
+
+### Jog Position mode
+
+This mode can be used to do short discrete movements of the robot. 
+
+ * `/rosarnl_node/jog_position_simple/goal`: Publish a Pose2D message to this topic to move a
+    short discrete distance in X or Theta (Y is not yet implemented).  Some
+    obstacle sensing is attempted, configure in ARNL configuration (parameter file
+    or via MobileEyes)
+ * `/rosarnl_node/jog_position/goal`: Initiate an Action Server action with a
+    new Jog Position mode goal. Result is sent back when finished, cancel if
+    interrupted.
+ 
+### Misc
+
+ * `/rosarnl_node/arnl_server_mode`: String with the current server mode name
+ * `/rosarnl_node/arnl_server_status`: String with the current server status message
+ * `/rosarnl_node/enable_motors` and `/rosarnl_node/disable_motors`: Services
+  which  enable/disable the robot motors.
+ * `/rosarnl_node/motors_state`: Subscribe to this topic to receive current
+   state of motors as a Bool message which is true if enabled, false if disabled.
+
+
+
 
 Transforms published via `tf`
 -----------------------------

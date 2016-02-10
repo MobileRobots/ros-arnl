@@ -10,6 +10,8 @@
 #include "ArLocalizationTask.h"
 #include "ArDocking.h"
 #include "Aria/ArSystemStatus.h"
+#include "ArNetworking/ArServerModeJogPosition.h"
+#include "ArNetworking/ArServerModeRatioDrive.h"
 
 #include "RobotMonitor.h"
 
@@ -252,7 +254,7 @@ ArnlSystem::Error ArnlSystem::setup()
 
   new ArSonarAutoDisabler(robot);
 
-  ArServerModeRatioDrive *modeRatioDrive = new ArServerModeRatioDrive(serverBase, robot);  
+  modeRatioDrive = new ArServerModeRatioDrive(serverBase, robot);  
 
 
   ArActionLost *actionLostRatioDrive = new ArActionLost(locTask, pathTask, modeRatioDrive);
@@ -261,11 +263,16 @@ ArnlSystem::Error ArnlSystem::setup()
   modeRatioDrive->addToConfig(Aria::getConfig(), "Teleop settings");
   modeRatioDrive->addControlCommands(commands);
 
-//Wander Mode//
+  //Wander Mode//
   modeWander = new ArServerModeWander(serverBase, robot);
   ArActionLost *actionLostWander = new ArActionLost(locTask,pathTask,modeWander);
   modeWander->getActionGroup()->addAction(actionLostWander, 110);
-//Wander Mode//
+
+  //Jog position Mode//
+  modeJogPosition = new ArServerModeJogPosition(serverBase, robot);
+  modeJogPosition->addToConfig(Aria::getConfig());
+  ArActionLost *actionLostJogPosition = new ArActionLost(locTask,pathTask,modeJogPosition);
+  modeJogPosition->getActionGroup()->addAction(actionLostJogPosition, 110);
 
   // Tool to log data periodically to a file
   //ArDataLogger dataLogger(&robot, "datalog.txt");
