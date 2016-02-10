@@ -7,7 +7,10 @@ ROS interface to basic ARNL features.
 rosarnl requires ARNL and ArnlBase 1.9.2 or later to be installed.  The packages 
 from Adept MobileRobots must be installed  separately, they cannot currently 
 be downloaded rosdep/catkin. Download from
-<http://robots.mobilerobots.com/wiki/ARNL>.
+<http://robots.mobilerobots.com/wiki/ARNL>.     "Prerelease" testing packages
+for 1.9.2 can be found at
+<http://robots.mobileroobts.com/ARNL/download/prerelease> and
+<http://robots.mobilerobots.com/BaseArnl/download/prerelease>.
  
 In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
 and configured via MobileEyes or other ArNetworking clients simultaneously 
