@@ -88,12 +88,12 @@ class RosArnlNode
       }
       void execute(const rosarnl::JogPositionGoalConstPtr &goal) {
         ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Executing new Jog Position action goal (%f, %f, %f)\n", goal->offset.x, goal->offset.y, goal->offset.theta);
-        if(goal->offset.x > 0.000001)
+        if(fabs(goal->offset.x) > 0.000001)
         {
           jogMode->activate(); // XXX temporary should be automatic in future
           jogMode->move( goal->offset.x * 1000.0);
         }
-        if(goal->offset.theta > 0.000001)
+        if(fabs(goal->offset.theta) > 0.000001)
         {
           jogMode->activate(); // XXX temporary should be automatic in future
           jogMode->turn( ArMath::radToDeg(goal->offset.theta) );
@@ -642,12 +642,12 @@ void RosArnlNode::arnl_goal_interrupted_cb(ArPose p)
 void RosArnlNode::simple_jog_position_sub_cb(const geometry_msgs::Pose2DConstPtr &msg)
 {
   ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Simple Jog Position goal received on jog_position_simple/goal topic: (%f, %f, %f)\n", msg->x, msg->y, msg->theta);
-  if(msg->x > 0.00001)
+  if(fabs(msg->x) > 0.00001)
   {
     arnl.modeJogPosition->activate(); // XXX temporary should be automatic in future
     arnl.modeJogPosition->move(msg->x * 1000.0);
   }
-  if(msg->theta > 0.0001)
+  if(fabs(msg->theta) > 0.0001)
   {
     arnl.modeJogPosition->activate(); // XXX temporary should be automatic in future
     arnl.modeJogPosition->turn(ArMath::radToDeg(msg->theta));
