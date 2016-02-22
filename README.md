@@ -100,13 +100,14 @@ For example, `lms2xx_1`, `lms1xx_1`, etc.
  
 ### Misc
 
- * `/rosarnl_node/arnl_server_mode`: String with the current server mode name
- * `/rosarnl_node/arnl_server_status`: String with the current server status message
- * `/rosarnl_node/enable_motors` and `/rosarnl_node/disable_motors`: Services
+ * `/rosarnl_node/arnl_server_mode` topic: String with the current server mode name
+ * `/rosarnl_node/arnl_server_status` topic: String with the current server status message
+ * `/rosarnl_node/enable_motors` and `/rosarnl_node/disable_motors` topics: Services
   which  enable/disable the robot motors.
- * `/rosarnl_node/motors_state`: Subscribe to this topic to receive current
+ * `/rosarnl_node/motors_state` topic: Subscribe to this topic to receive current
    state of motors as a Bool message which is true if enabled, false if disabled.
-
+ * `/rosarnl_node/stop` service: Call this service to enter stop mode. Any goals are interrupted and robot is decelerated to a stop.
+ * `rosarnl_node/dock` service: Call this service to enter dock mode. The robot stops, then navigates to a docking station to recharge (if the location of one is present in the map as a Dock point. See ARNL configuration e.g. via MobileEyes for more docking parameters.)
 
 
 
