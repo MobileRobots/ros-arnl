@@ -11,6 +11,12 @@ be downloaded rosdep/catkin. Download from
 for 1.9.2 can be found at
 <http://robots.mobilerobots.com/ARNL/download/prerelease> and
 <http://robots.mobilerobots.com/BaseArnl/download/prerelease>.
+
+To build, check out the repository in the `src` subdirectory of your ROS
+(catkin) workspace.  Run `catkin_make` from the workspace directory.
+
+To run `rosarnl_node`, use rosrun: `rosrun rosarnl rosarnl_node`. It will
+connect to the robot and begin running.  
  
 In addition, ARNL ArNetworking services are provided, so ARNL can be accessed
 and configured via MobileEyes or other ArNetworking clients simultaneously 
@@ -80,7 +86,7 @@ This mode can be used to do short discrete movements of the robot.
  * `/rosarnl_node/jog_position_simple/goal`: Publish a `geometry_msgs/Pose2D` message to this topic to move a
     short discrete distance in X or Theta (Y is not yet implemented).  Some
     obstacle sensing is attempted, configure in ARNL configuration (parameter file
-    or via MobileEyes)
+    or via MobileEyes).
  * `/rosarnl_node/jog_position/goal`: Initiate an Action Server action with a
     new Jog Position mode goal. Result is sent back when finished, cancel if
     interrupted.
@@ -169,7 +175,16 @@ Send to a goal using goalname:
 
     rostopic pub -1 /rosarnl_node/goalname std_msgs/String "GoalName"
 
+Turn 90 degrees:
 
+    rostopic pub -1 /rosarnl_node/jog_position_simple/goal geometry_msgs/Pose2D '{pose: {orientation: {w: 1.0, z: 1.571}}}'
+
+Move forward half a meter:
+
+    rostopic pub -1 /rosarnl_node/jog_position_simple/goal geometry_msgs/Pose2D '{pose: {position: {x: 0.5}}}'
+
+For examples of sending messages and controlling actions from clients written in
+Python, see the client example python scripts in this directory. 
 
 TODO
 ----

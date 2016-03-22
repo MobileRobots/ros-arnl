@@ -269,7 +269,7 @@ ArnlSystem::Error ArnlSystem::setup()
   modeWander->getActionGroup()->addAction(actionLostWander, 110);
 
   //Jog position Mode//
-  modeJogPosition = new ArServerModeJogPosition(serverBase, robot);
+  modeJogPosition = new ArServerModeJogPosition(serverBase, robot, "jogPositionMode", commands);
   modeJogPosition->addToConfig(Aria::getConfig());
   ArActionLost *actionLostJogPosition = new ArActionLost(locTask,pathTask,modeJogPosition);
   modeJogPosition->getActionGroup()->addAction(actionLostJogPosition, 110);
