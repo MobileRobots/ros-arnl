@@ -50,13 +50,17 @@ def jog_action_example(x = None, heading = None, canceltime=None):
       time.sleep(canceltime)
       print 'Cancelling current jog goal...'
       jog_position_client.cancel_goal()
+      print 'Waiting for result...'
+      jog_position_client.wait_for_result()
     else:
       # Waits for the server to finish performing the action.
       print 'Waiting for result...'
       jog_position_client.wait_for_result()
 
+    print '----------------------------------------------------'
     print 'Result received. Action state is %s' % jog_position_client.get_state()
     print 'Goal status message is %s' % jog_position_client.get_goal_status_text()
+    print '----------------------------------------------------'
 
     return jog_position_client.get_result()  
 
@@ -66,16 +70,16 @@ if __name__ == '__main__':
         # publish and subscribe over ROS.
         rospy.init_node('jog_action_client_example')
         print 'Testing jog forward 0.5 m no heading... '
-        result = jog_action_example(0.5, None)
+        result = jog_action_example(x=0.5, heading=None)
         print 'Testing jog 90 deg...'
-        result = jog_action_example(None, 1.571)
+        result = jog_action_example(x=None, heading=1.571)
         print 'Testing jog -0.5m...'
-        result = jog_action_example(-0.5, None)
+        result = jog_action_example(x=-0.5, heading=None)
         print 'Testing jog -90 deg...'
-        result = jog_action_example(None, -1.571)
+        result = jog_action_example(x=None, heading=-1.571)
         print 'Testing combined 0.5m, 90 deg...'
-        result = jog_action_example(0.5, 1.571)
+        result = jog_action_example(x=0.5, heading=1.571)
         print 'Testing jog one meter but cancel after 3 seconds...'
-        result = jog_action_example(1, heading=None, canceltime=3)
+        result = jog_action_example(x=1, heading=None, canceltime=3)
     except rospy.ROSInterruptException:
         print "program interrupted before completion"

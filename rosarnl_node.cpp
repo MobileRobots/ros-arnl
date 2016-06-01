@@ -81,11 +81,10 @@ class RosArnlNode
         nh(_nh),
         jogMode(jm),
         executing(false),
-          // TODO may need to use a goal callback instead of passing execute()
-          // as an execute callback....
         action_server(nh, "jog_position", boost::bind(&JogPositionActionServer::execute, this, _1), false)
       {
       }
+
       void start() {
           action_server.start();
       }
@@ -111,14 +110,24 @@ class RosArnlNode
         
         while(executing)
         {
-        // todo better to use a deactivate callback instead of calling
-        // isActive() here?
-        if(action_server.isPreemptRequested() || !jogMode->isActive())
-        {
-          // check for cancellation
-          if(action_server.isPreemptRequested() || !jogMode->isActive())
+          if(!action_server.isActive())
           {
-            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action preempted or ARNL mode changed");
+            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action server no longer active!");
+            action_server.setAborted(rosarnl::JogPositionResult(), "Jog Position action server goal cancelled");
+          }
+
+          // todo better to use a deactivate callback instead of calling
+          // isActive() here?
+          if(!jogMode->isActive())
+          {
+            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position mode deactivated");
+            action_server.setAborted(rosarnl::JogPositionResult(), "Jog Position Mode Deactivated");
+            return;
+          }
+
+          if(action_server.isPreemptRequested())
+          {
+            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action preempted");
             if(action_server.isNewGoalAvailable())
             {
               ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action has a new goal after pre-emption. Executing that.");
@@ -127,25 +136,24 @@ class RosArnlNode
             else
             {
               executing = false;
-              action_server.setPreempted();
+              action_server.setPreempted(rosarnl::JogPositionResult(), "Jog Position Preempted");
             }
             return;
           }
 
           // check for jog movement being done
-          // todo check heading
+          // todo check heading delta
           // todo check a timeout?
           if(jogMode->getDriveAction()->haveAchievedDistance())
           {
             ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action goal done");
             executing = false;
-            action_server.setSucceeded();
+            action_server.setSucceeded(rosarnl::JogPositionResult(), "Jog Position Done");
             return;
           }
           // todo publish feedback
-          executing = false;
-          action_server.setPreempted();
-          return;
+          // action_server.publishFeedback();
+          ArUtil::sleep(100);
         }
 
         // end of execute()
