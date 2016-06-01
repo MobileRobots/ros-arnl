@@ -81,12 +81,20 @@ class RosArnlNode
         nh(_nh),
         jogMode(jm),
         executing(false),
+          // TODO may need to use a goal callback instead of passing execute()
+          // as an execute callback....
         action_server(nh, "jog_position", boost::bind(&JogPositionActionServer::execute, this, _1), false)
       {
       }
       void start() {
           action_server.start();
       }
+
+      // TODO may need to move this to a SimpleActionServer goal callback
+      // instead of execute, or block at end until ArServerModeJogPosition finishes a
+      // goal. This may let us update goal status from the main thread rather
+      // than encountering actionlib errors when this function returns with the
+      // goal still incomplete.
       void execute(const rosarnl::JogPositionGoalConstPtr &goal) {
         ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Executing new Jog Position action goal (%f, %f, %f)\n", goal->offset.x, goal->offset.y, goal->offset.theta);
         if(fabs(goal->offset.x) > 0.000001)
@@ -102,6 +110,10 @@ class RosArnlNode
         executing = true;
         
         while(executing)
+        {
+        // todo better to use a deactivate callback instead of calling
+        // isActive() here?
+        if(action_server.isPreemptRequested() || !jogMode->isActive())
         {
           // check for cancellation
           if(action_server.isPreemptRequested() || !jogMode->isActive())
@@ -131,6 +143,9 @@ class RosArnlNode
             return;
           }
           // todo publish feedback
+          executing = false;
+          action_server.setPreempted();
+          return;
         }
 
         // end of execute()
