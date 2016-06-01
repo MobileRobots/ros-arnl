@@ -17,6 +17,7 @@ import geometry_msgs
 from rosarnl.msg import JogPositionAction, JogPositionGoal
 import tf.transformations
 import time
+import std_msgs
 
 def jog_action_example(x = None, heading = None, canceltime=None):
     # Creates the SimpleActionClient
@@ -38,6 +39,8 @@ def jog_action_example(x = None, heading = None, canceltime=None):
       pose.theta = heading
     jog = JogPositionGoal()
     jog.offset = pose
+    jog.timeout = rospy.Duration(10) # 10 second timeout
+      
     #jog.target_pose.header.stamp = rospy.Time.now()
 
 

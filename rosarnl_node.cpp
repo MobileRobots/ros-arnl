@@ -75,11 +75,13 @@ class RosArnlNode
       geometry_msgs::Pose2D goal;
       geometry_msgs::Pose2D feedback;
       ArServerModeJogPosition *jogMode;
+      ArRobot *robot;
       bool executing;
       actionlib::SimpleActionServer<rosarnl::JogPositionAction> action_server;
-      JogPositionActionServer(ros::NodeHandle& _nh, ArServerModeJogPosition *jm) :
+      JogPositionActionServer(ros::NodeHandle& _nh, ArServerModeJogPosition *jm, ArRobot *r) :
         nh(_nh),
         jogMode(jm),
+        robot(r),
         executing(false),
         action_server(nh, "jog_position", boost::bind(&JogPositionActionServer::execute, this, _1), false)
       {
@@ -96,17 +98,30 @@ class RosArnlNode
       // goal still incomplete.
       void execute(const rosarnl::JogPositionGoalConstPtr &goal) {
         ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Executing new Jog Position action goal (%f, %f, %f)\n", goal->offset.x, goal->offset.y, goal->offset.theta);
+        bool executingMove = false;
+        bool executingTurn = false;
         if(fabs(goal->offset.x) > 0.000001)
         {
           jogMode->activate(); // XXX temporary should be automatic in future
           jogMode->move( goal->offset.x * 1000.0);
+          executingMove = true;
         }
         if(fabs(goal->offset.theta) > 0.000001)
         {
           jogMode->activate(); // XXX temporary should be automatic in future
           jogMode->turn( ArMath::radToDeg(goal->offset.theta) );
+          executingTurn = true;
         }
         executing = true;
+
+        // determine what the eventual heading should be of the robot after any
+        // rotation offset is achieved so we can check if its reached yet:
+        // todo could move that check into ArServerModeJogPosition API
+        robot->lock();
+        const double goalHeadingDeg = ArMath::addAngle(robot->getTh(), ArMath::radToDeg(goal->offset.theta));
+        robot->unlock();
+
+        ros::Time startTime = ros::Time::now();
         
         while(executing)
         {
@@ -141,16 +156,27 @@ class RosArnlNode
             return;
           }
 
-          // check for jog movement being done
-          // todo check heading delta
-          // todo check a timeout?
-          if(jogMode->getDriveAction()->haveAchievedDistance())
+          // check for jog movements being done
+          robot->lock();
+          const double robotTheta = robot->getTh();
+          robot->unlock();
+          if( (!executingMove || jogMode->getDriveAction()->haveAchievedDistance()) && (!executingTurn || ArMath::subAngle(goalHeadingDeg, robotTheta) < 0.0001) )
           {
             ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action goal done");
             executing = false;
             action_server.setSucceeded(rosarnl::JogPositionResult(), "Jog Position Done");
             return;
           }
+
+          // check timeout
+          if(ros::Time::now() - startTime > ros::Duration(goal->timeout))
+          {
+            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action timed out");
+            action_server.setAborted(rosarnl::JogPositionResult(), "Jog Position Action Timed Out");
+            return;
+          }
+        
+
           // todo publish feedback
           // action_server.publishFeedback();
           ArUtil::sleep(100);
@@ -227,7 +253,7 @@ class RosArnlNode
 RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   arnl(arnlsys),
   myPublishCB(this, &RosArnlNode::publish),
-  jog_position_action_server(nh, arnl.modeJogPosition),
+  jog_position_action_server(nh, arnl.modeJogPosition, arnlsys.robot),
   actionServer(nh, "move_base", boost::bind(&RosArnlNode::execute_action_cb, this, _1), false),
   arnl_goal_done(false),
   action_executing(false)

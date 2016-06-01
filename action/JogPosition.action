@@ -1,7 +1,9 @@
 # goal offset
 geometry_msgs/Pose2D offset
+duration timeout
 ---
 # no value provided with result
 ---
-# feedback, current pose
+# feedback, current pose and time since start of goal. TODO include remaining distannce
 geometry_msgs/Pose2D current
+duration duration
