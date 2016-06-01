@@ -1,6 +1,7 @@
 #ifndef _ARNLSYSTEM_H
 #define _ARNLSYSTEM_H
 
+
 #include "ariaUtil.h"
 
 class ArRobot;

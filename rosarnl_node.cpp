@@ -1,4 +1,5 @@
 
+
 #include "Aria/Aria.h"
 #include "Arnl.h"
 #include "ArPathPlanningInterface.h"
@@ -99,34 +100,42 @@ class RosArnlNode
           jogMode->turn( ArMath::radToDeg(goal->offset.theta) );
         }
         executing = true;
-      }
-      void check() {
-        if(!executing) return;
-        // todo better to use a deactivate callback instead of calling
-        // isActive() here?
-        if(action_server.isPreemptRequested() || !jogMode->isActive())
+        
+        while(executing)
         {
-          ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action preempted or mode changed");
-          if(action_server.isNewGoalAvailable())
+          // check for cancellation
+          if(action_server.isPreemptRequested() || !jogMode->isActive())
           {
-            execute(action_server.acceptNewGoal());
+            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action preempted or ARNL mode changed");
+            if(action_server.isNewGoalAvailable())
+            {
+              ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action has a new goal after pre-emption. Executing that.");
+              execute(action_server.acceptNewGoal()); // !! recursive. should we be checking this outside the action thread?
+            }
+            else
+            {
+              executing = false;
+              action_server.setPreempted();
+            }
             return;
           }
-          executing = false;
-          action_server.setPreempted();
-          return;
+
+          // check for jog movement being done
+          // todo check heading
+          // todo check a timeout?
+          if(jogMode->getDriveAction()->haveAchievedDistance())
+          {
+            ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action goal done");
+            executing = false;
+            action_server.setSucceeded();
+            return;
+          }
+          // todo publish feedback
         }
-        // todo check a timeout?
-        if(jogMode->getDriveAction()->haveAchievedDistance())
-        {
-          ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Jog Position action goal done");
-          executing = false;
-          action_server.setSucceeded();
-          return;
-        }
-        // todo publish feedback
-        return;
+
+        // end of execute()
       }
+
     };
     JogPositionActionServer jog_position_action_server;
     ros::Subscriber simple_jog_position_sub;
@@ -370,7 +379,7 @@ void RosArnlNode::publish()
     actionServer.publishFeedback(feedback);
   }
 
-  jog_position_action_server.check();
+//  jog_position_action_server.check();
 
 
   // publishing transform map->base_link

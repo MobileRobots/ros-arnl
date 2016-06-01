@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rosarnl)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib nav_msgs)
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
@@ -37,7 +37,7 @@ add_action_files(
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
-  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs
+  DEPENDENCIES actionlib_msgs geometry_msgs std_msgs nav_msgs
 )
 
 #generate_dynamic_reconfigure_options(cfg/....cfg)
