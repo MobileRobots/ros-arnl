@@ -772,6 +772,7 @@ int main( int argc, char** argv )
 
   arnl.robot->lock();
   const std::map<int, ArLaser*> *lasers = arnl.robot->getLaserMap();
+//---------------- This loop is not properly ding it's job, working on effective fix ------------------------------
   for(std::map<int, ArLaser*>::const_iterator i = lasers->begin(); i != lasers->end(); ++i)
   {
     ArLaser *l = i->second;
@@ -783,6 +784,7 @@ int main( int argc, char** argv )
     tfname += "_frame";
     new LaserPublisher(l, n, true, tfname);
   }
+//----------------------------------------------------------------------------------------------------------------
   arnl.robot->unlock();
 
   node->spin();
