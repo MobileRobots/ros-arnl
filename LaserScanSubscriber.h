@@ -26,6 +26,7 @@ public:
     sub = nh.subscribe<sensor_msgs::LaserScan>(scantopic, 10, &processLaserScan, this);
 
     // TODO get laserscan topic format data and set up myReadings, max range,
+
     // etc. based on that, either here or when we get
     // the first message or check when receiving messages if its changed,
     // instead of the following:
@@ -76,7 +77,10 @@ public:
 	  ArLog::log(ArLog::Normal, "ROSLaserScanRangeDevice: range is %f meters\n", r);
       }
     */
+
     lockDevice();
+
+    // TODO we need the tf information from the device and add that transform
 
     myReadings.resize(scan->ranges.size());
     float angle = scan->angle_min;
