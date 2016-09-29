@@ -10,6 +10,7 @@
 
 #include "ArnlSystem.h"
 #include "LaserPublisher.h"
+#include "LaserScanSubscriber.h"
 
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
@@ -29,6 +30,11 @@
 #include <actionlib/server/simple_action_server.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <rosarnl/JogPositionAction.h>
+
+/* TODO 
+     * move goal action server stuff to separat class 
+     * Set up node parameters that set up LaserScanSubscribers
+*/
 
 
 class RosArnlNode
@@ -784,6 +790,12 @@ int main( int argc, char** argv )
     new LaserPublisher(l, n, true, tfname);
   }
   arnl.robot->unlock();
+
+
+  // TODO use command line parameters to configure these. This is just one for
+  // testing
+  ROSLaserScanRangeDevice rosRD("/scan", n);
+  arnl.pathTask->addRangeDevice(&rosRD, ArPathPlanningTask::CURRENT);
 
   node->spin();
 
