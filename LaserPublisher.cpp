@@ -27,10 +27,10 @@ LaserPublisher::LaserPublisher(ArLaser *_l, ros::NodeHandle& _n, bool _broadcast
   laser->addReadingCB(&laserReadingsCB);
   laser->unlockDevice();
   std::string laserscan_name(laser->getName());
-  boost::erase_all(laserscan_name,".")
+  boost::erase_all(laserscan_name,".");
   laserscan_name += "_laserscan";
   std::string pointcloud_name(laser->getName());
-  boost::erase_all(pointcloud_name,".")
+  boost::erase_all(pointcloud_name,".");
   pointcloud_name += "_pointcloud";
   laserscan_pub = node.advertise<sensor_msgs::LaserScan>(laserscan_name, 20);
   pointcloud_pub = node.advertise<sensor_msgs::PointCloud>(pointcloud_name, 50);
