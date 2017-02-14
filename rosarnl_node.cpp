@@ -9,6 +9,7 @@
 #include "ArServerModeJogPosition.h"
 
 #include "ArnlSystem.h"
+#include <rosarnl/BatteryStatus.h>
 #include "LaserPublisher.h"
 
 #include <ros/ros.h>
@@ -192,6 +193,11 @@ class RosArnlNode
 
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     ros::Publisher pose_pub;
+    
+    // Battery publishing
+    ros::Publisher battery_pub;
+    ros::Time last_battery_pub_time;
+    ros::Duration battery_pub_period;
 
     geometry_msgs::TransformStamped map_trans;
     tf::TransformBroadcaster map_broadcaster;
@@ -298,6 +304,10 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   arnl_server_status_pub = n.advertise<std_msgs::String>("arnl_server_status", -1);
 
   arnl_path_state_pub = n.advertise<std_msgs::String>("arnl_path_state", -1);
+  
+  // Battery Publishing
+  battery_pub = n.advertise<rosarnl::BatteryStatus>("battery_status", 1, true);
+  battery_pub_period = ros::Duration(5.0);
 
   // TODO the move_base and move_bas_simple topics should be in separate node
   // handles?
@@ -346,6 +356,8 @@ void RosArnlNode::publish()
   // use a callback from arnl for robot pose updates rather than every aria
   // cycle.  In particular, getting the covariance is a bit computational
   // intensive and not everyone needs it.
+  
+  ros::Time current_time = ros::Time::now();
 
   ArTime tasktime;
 
@@ -419,7 +431,17 @@ void RosArnlNode::publish()
 #endif
   
   pose_pub.publish(pose_msg);
-
+  
+  // Battery info publishing
+  // Check for periodic timeout
+  if (current_time - last_battery_pub_time > battery_pub_period)
+  {
+    rosarnl::BatteryStatus battery_msg;
+    battery_msg.charge_percent = arnl.robot->getStateOfCharge();
+    battery_msg.charging_state = arnl.robot->getChargeState();
+    battery_pub.publish(battery_msg);
+    last_battery_pub_time = current_time;
+  }
 
   if(action_executing) 
   {

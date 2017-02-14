@@ -18,11 +18,10 @@ set(ROS_BUILD_TYPE RelWithDebInfo)
 #set the default path for built libraries to the "lib" directory
 #set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-#uncomment if you have defined messages
-#add_message_files(
-#  FILES
-#  ...
-#)
+add_message_files(
+  FILES
+  BatteryStatus.msg
+)
 
 #uncomment if you have defined services
 #add_service_files(
@@ -73,8 +72,7 @@ ELSE()
 ENDIF()
 
 add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp LaserPublisher.cpp)
-#add_dependencies(rosarnl_node rosarnl_gencfg)
-#add_dependencies(rosarnl_node rosarnl_gencpp)
+add_dependencies(rosarnl_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_messages_cpp})
 
 target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl BaseArnl ArNetworkingForArnl AriaForArnl pthread dl rt)
 set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
