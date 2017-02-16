@@ -21,6 +21,7 @@ set(ROS_BUILD_TYPE RelWithDebInfo)
 add_message_files(
   FILES
   BatteryStatus.msg
+  BumperState.msg
 )
 
 #uncomment if you have defined services

@@ -10,6 +10,7 @@
 
 #include "ArnlSystem.h"
 #include <rosarnl/BatteryStatus.h>
+#include <rosarnl/BumperState.h>
 #include "LaserPublisher.h"
 
 #include <ros/ros.h>
@@ -194,6 +195,10 @@ class RosArnlNode
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
     ros::Publisher pose_pub;
     
+    ros::Publisher bumpers_pub;
+    typedef unsigned char bumper_mask_t;
+    bumper_mask_t front_bumpers, rear_bumpers;
+    
     // Battery publishing
     ros::Publisher battery_pub;
     ros::Time last_battery_pub_time;
@@ -304,6 +309,10 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   arnl_server_status_pub = n.advertise<std_msgs::String>("arnl_server_status", -1);
 
   arnl_path_state_pub = n.advertise<std_msgs::String>("arnl_path_state", -1);
+  
+  bumpers_pub = n.advertise<rosarnl::BumperState>("bumper_state", 1, true); // latched
+  front_bumpers = 0xFF; // Initialize to this so we will definitely publish on the first loop
+  rear_bumpers = 0xFF;
   
   // Battery Publishing
   battery_pub = n.advertise<rosarnl::BatteryStatus>("battery_status", 1, true);
@@ -441,6 +450,41 @@ void RosArnlNode::publish()
     battery_msg.charging_state = arnl.robot->getChargeState();
     battery_pub.publish(battery_msg);
     last_battery_pub_time = current_time;
+  }
+  
+  // Check if a bumper event has occurred.
+  const uint16_t stall = arnl.robot->getStallValue();
+  bumper_mask_t new_front_bumpers = (bumper_mask_t)(stall >> 8); // First byte
+  bumper_mask_t new_rear_bumpers = (bumper_mask_t)(stall);       // Second byte
+  
+  // Build message and publish if the state has changed
+  if (new_front_bumpers != front_bumpers || new_rear_bumpers != rear_bumpers) {
+    front_bumpers = new_front_bumpers;
+    rear_bumpers = new_rear_bumpers;
+    
+    rosarnl::BumperState msg;
+    msg.header.frame_id = frame_id_bumper;
+    msg.header.stamp = ros::Time::now();
+    msg.front_bumpers.resize(arnl.robot->getNumFrontBumpers());
+    msg.rear_bumpers.resize(arnl.robot->getNumRearBumpers());
+    
+    std::stringstream bumper_info(std::stringstream::out);
+    // Bit 0 is for stall, next bits are for bumpers (leftmost is LSB)
+    for (unsigned int i=0, size = arnl.robot->getNumFrontBumpers(); i < size; ++i) {
+      msg.front_bumpers[i] = (front_bumpers & (1 << (i+1)));
+      bumper_info << " " << msg.front_bumpers[i];
+    }
+    ROS_DEBUG("RosAria: Front bumpers:%s", bumper_info.str().c_str());
+
+    bumper_info.str("");
+    // Rear bumpers have reverse order (rightmost is LSB)
+    for (unsigned int i=0, size = arnl.robot->getNumRearBumpers(); i < size; ++i) {
+      msg.rear_bumpers[i] = (rear_bumpers & (1 << (size-i)));
+      bumper_info << " " << msg.rear_bumpers[i];
+    }
+    ROS_DEBUG("RosAria: Rear bumpers:%s", bumper_info.str().c_str());
+    
+    bumpers_pub.publish(msg);
   }
 
   if(action_executing) 
