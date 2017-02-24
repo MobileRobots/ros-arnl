@@ -1,0 +1,9 @@
+int8 CHARGING_UNKNOWN = -1
+int8 CHARGING_NOT = 0
+int8 CHARGING_BULK = 1
+int8 CHARGING_OVERCHARGE = 2
+int8 CHARGING_FLOAT = 3
+int8 CHARGING_BALANCE = 4
+
+int8 charging_state
+float32 charge_percent
