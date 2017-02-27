@@ -104,6 +104,35 @@ topics are published with `sensor_msgs/PointCloud` and `sensor_msgs/LaserScan`
 messages respectively, where _lasername_ is ARIA's identifier for the laser.
 For example, `lms2xx_1`, `lms1xx_1`, etc.
  
+### Bumper Data
+
+Bumper data is published via BumperState type messages on the `/rosarnl_node/bumper_state` topic.  Messages contain two arrays of boolean flags indicating which bumper switches were recently pressed:
+
+  bool[] front_bumpers
+  bool[] rear_bumpers
+
+See robot documentation for locations of bumper switches.
+
+The BumperState message type is defined by the rosarnl package as `/rosarnl/BumperState` (BumperState.msg).
+
+### Battery Data
+
+Battey state information is published via BatteryStatus messages on the `/rosarnl_node/battery_status` topic. Messages contain two fields:
+
+  int8 charging_state
+  float32 charge_percent
+
+The value given for `charging_state` is one of:
+
+  CHARGING_UNKNOWN = -1
+  CHARGING_NOT = 0
+  CHARGING_BULK = 1
+  CHARGING_OVERCHARGE = 2
+  CHARGING_FLOAT = 3
+  CHARGING_BALANCE = 4
+
+This message type is defined by the rosarnl package as `rosarnl/BatteryStatus` (BatteryStatus.msg).
+
 ### Misc
 
  * `/rosarnl_node/arnl_server_mode` topic: String with the current server mode name
