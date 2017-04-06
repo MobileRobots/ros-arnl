@@ -11,6 +11,7 @@
 #include "ArnlSystem.h"
 #include "LaserPublisher.h"
 #include "LaserScanSubscriber.h"
+#include "PointCloudSubscriber.h"
 
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
@@ -21,7 +22,6 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/tf.h>
-#include <tf/transform_listener.h>  
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
 #include <std_msgs/Bool.h>
@@ -200,7 +200,7 @@ class RosArnlNode
     ros::Publisher pose_pub;
 
     geometry_msgs::TransformStamped map_trans;
-    tf::TransformBroadcaster map_broadcaster;
+    tf::TransformBroadcaster map_broadcaster; // todo update to tf2
 
     std::string tf_prefix;
     std::string frame_id_map;
@@ -274,6 +274,8 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   // will result in the frame_ids being set to /MyRobot/map etc,
   // rather than /map. This is useful for Multi Robot Systems.
   // See ROS Wiki for further details.
+  //
+  // todo update to tf2
 
   tf_prefix = tf::getPrefixParam(n);
   frame_id_map = tf::resolve(tf_prefix, "map");
@@ -442,10 +444,10 @@ void RosArnlNode::publish()
   map_trans.header.frame_id = frame_id_map;
   map_trans.child_frame_id = frame_id_base_link;
   
-  map_trans.transform.translation.x = pos.getX()/1000;
-  map_trans.transform.translation.y = pos.getY()/1000;
+  map_trans.transform.translation.x = pos.getX()/1000.0;
+  map_trans.transform.translation.y = pos.getY()/1000.0;
   map_trans.transform.translation.z = 0.0;
-  map_trans.transform.rotation = tf::createQuaternionMsgFromYaw(pos.getTh()*M_PI/180);
+  map_trans.transform.rotation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, (pos.getTh())*M_PI/180.0);
 
   map_broadcaster.sendTransform(map_trans);
 
@@ -793,9 +795,18 @@ int main( int argc, char** argv )
 
 
   // TODO use command line parameters to configure these. This is just one for
-  // testing
-  ROSLaserScanRangeDevice rosRD("/scan", n);
+  // XXX temp testing. 
+  //ROSLaserScanRangeDevice rosRD("/scan", n, "laser");
+  //arnl.pathTask->addRangeDevice(&rosRD, ArPathPlanningTask::CURRENT);
+  //arnl.drawings->addRangeDevice(&rosRD);
+  ROSPointCloudRangeDevice rosRD("/pc2_testpattern", n, "sensor", "map");
+
+  // todo an automatic "below floor" flag (base_link -> sensor transform z + // fudge padding?)
+  //rosRD.filterZBelow(0);
+  //rosRD.filterZAbove(750);
+
   arnl.pathTask->addRangeDevice(&rosRD, ArPathPlanningTask::CURRENT);
+  arnl.drawings->addRangeDevice(&rosRD);
 
   node->spin();
 

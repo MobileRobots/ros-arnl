@@ -2,7 +2,9 @@
 #include "Aria.h"
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
+#include <tf/transform_listener.h>
 #include "LaserScanSubscriber.h"
+#include "ArTimeToROSTime.h"
 
 
 /* TODO
@@ -10,13 +12,15 @@
       * Use a tf for the sensor rather than assuming its at 0,0 on the robot
 */       
 
-ROSLaserScanRangeDevice::ROSLaserScanRangeDevice(const char *scantopic, ros::NodeHandle& nh, const char *name) : ArRangeDevice(
+ROSLaserScanRangeDevice::ROSLaserScanRangeDevice(const std::string& scantopic,
+ros::NodeHandle& nh, const std::string& _tfname, const std::string& name) : ArRangeDevice(
     300,  // Current buffer size. Choose a value big enough for at least one set of readings
     500,  // Cumulative buffer size
-    name?name:scantopic, // Name
+    (name == "")?scantopic.c_str():name.c_str(), // ARIA sensor Name
     25000 // Default maximum range limit. Will be reset later. Must be >= sensor's maximum range
   ),
-    myCounter(0)
+    myCounter(0),
+    tfname(_tfname)
 {
  
 
@@ -27,7 +31,7 @@ ROSLaserScanRangeDevice::ROSLaserScanRangeDevice(const char *scantopic, ros::Nod
   // Subscribe to ROS topic
   sub = nh.subscribe<sensor_msgs::LaserScan>(scantopic, 10, &ROSLaserScanRangeDevice::processLaserScan, this);
 
-  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Subscribed to laser scan data from \"%s\" topic.", scantopic);
+  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Subscribed to laser scan data from \"%s\" topic, tf frame \"%s\"", scantopic.c_str(), tfname.c_str());
 }
 
 ROSLaserScanRangeDevice::~ROSLaserScanRangeDevice()
@@ -49,30 +53,39 @@ if(std::isfinite(r))
     }
   */
 
-  lockDevice();
 
-  // TODO we need the tf information from the device and add that transform, or
-  // use that in resetSensorPosition().
+  lockDevice();
 
   myReadings.resize(scan->ranges.size());
   setMaxRange(scan->range_max);
   float angle = scan->angle_min;
+  ros::Time t(scan->header.stamp);
+  const ros::Duration scanduration(scan->scan_time);
   for(size_t i = 0; i < scan->ranges.size(); ++i)
   {
-    float range = scan->ranges[i];
+    const float range = scan->ranges[i];
     if(std::isfinite(range))
     {
-      myReadings[i].resetSensorPosition(0, 0, ArMath::radToDeg(angle)); // todo someday set correct position of reading using tf instead of 0, 0
+      tf::StampedTransform transform;
+      tfListener.lookupTransform(tfname, "base_link", t, transform);
+      const float x = transform.getOrigin().x();
+      const float y = transform.getOrigin().y();
+      // todo adjust angle based on transform
+      // todo take other rotation axes (and z) into account
+      myReadings[i].resetSensorPosition(x, y, ArMath::radToDeg(angle)); 
       ArRobot *robot = getRobot();
-      ArPose robotPose = robot->getPose();
-      ArPose robotEncoderPose = robot->getEncoderPose();
-      ArTime currentTime; // will be set to current system time. TODO use timestamp from header plus i * time_increment
-      ArTransform toGlobal = robot->getToGlobalTransform();              //get robot position, encoder position, transform, counter, etc. 
+
+      // todo interpolate robot pose based on sensor tf timestamp
+      const ArPose robotPose = robot->getPose();
+      const ArPose robotEncoderPose = robot->getEncoderPose();
+      const ArTransform toGlobal = robot->getToGlobalTransform();       //get robot position, encoder position, transform, counter, etc. 
                                                                          //here same as in the ExampleRangeDevice
-      myReadings[i].newData( (range*1000.0), robotPose, robotEncoderPose, toGlobal, myCounter++, currentTime);
+
+      myReadings[i].newData( (range*1000.0), robotPose, robotEncoderPose, toGlobal, myCounter++, convertROSTimeToArTime(t));
       myCurrentBuffer.addReading(myReadings[i].getX(), myReadings[i].getY());
     }
     angle += scan->angle_increment;
+    t += scanduration;
   }
 
   unlockDevice();

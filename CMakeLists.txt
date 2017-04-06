@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rosarnl)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib nav_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib nav_msgs tf2 tf2_sensor_msgs)
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
@@ -47,7 +47,7 @@ generate_messages(
 #target_link_libraries(${PROJECT_NAME} another_library)
 
 catkin_package(
-    DEPENDS roscpp nav_msgs geometry_msgs tf actionlib_msgs
+    DEPENDS roscpp nav_msgs geometry_msgs tf actionlib_msgs tf2_sensor_msgs
 )
 
 
@@ -72,7 +72,7 @@ ELSE()
   endif()
 ENDIF()
 
-add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp LaserPublisher.cpp LaserScanSubscriber.cpp)
+add_executable(rosarnl_node rosarnl_node.cpp ArnlSystem.cpp RobotMonitor.cpp LaserPublisher.cpp LaserScanSubscriber.cpp PointCloudSubscriber.cpp )
 #add_dependencies(rosarnl_node rosarnl_gencfg)
 #add_dependencies(rosarnl_node rosarnl_gencpp)
 
@@ -80,6 +80,13 @@ target_link_libraries(rosarnl_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} Arnl B
 set_target_properties(rosarnl_node PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
 
 
+add_executable(test_time test_time.cpp)
+target_link_libraries(test_time ${catkin_LIBRARIES} ${Boost_LIBRARIES} AriaForArnl pthread dl rt)
+set_target_properties(test_time PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
+
+add_executable(test_names_util test_names_util.cpp)
+#target_link_libraries(test_names_util ${catkin_LIBRARIES} ${Boost_LIBRARIES} AriaForArnl pthread dl rt)
+set_target_properties(test_names_util PROPERTIES COMPILE_FLAGS "-fPIC -D_REENTRANT -Wall")
 
 #############
 ## Install ##

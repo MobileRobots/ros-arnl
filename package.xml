@@ -23,6 +23,8 @@ See /usr/local/Arnl/LICENSE.txt for ARNL library license terms.
   <build_depend>move_base_msgs</build_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_sensor_msgs</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>nav_msgs</run_depend>
@@ -32,6 +34,8 @@ See /usr/local/Arnl/LICENSE.txt for ARNL library license terms.
   <run_depend>move_base_msgs</run_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>actionlib_msgs</run_depend>
+  <run_depend>tf2</run_depend>
+  <run_depend>tf2_sensor_msgs</run_depend>
 
   <export>
 
