@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(rosarnl)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib nav_msgs tf2 tf2_sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp nav_msgs geometry_msgs tf genmsg actionlib_msgs actionlib nav_msgs tf2 tf2_sensor_msgs tf2_ros tf2_geometry_msgs)
 
 # Set the build type.  Options are:
 #  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage

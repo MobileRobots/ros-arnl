@@ -26,6 +26,7 @@ ROSPointCloudRangeDevice::ROSPointCloudRangeDevice(const std::string& topic,
   ),
     myCounter(0),
     tfListener(tfBuffer),
+    tfMsgFilter(sub, tfBuffer, _tfname, 10, 0),
     sensor_tfname(_tfname),
     global_tfname(_global_tfname),
     limit_min_z(false),
@@ -40,7 +41,10 @@ ROSPointCloudRangeDevice::ROSPointCloudRangeDevice(const std::string& topic,
   // todo wait for tf?
 
   // Subscribe to ROS topic
-  sub = nh.subscribe<sensor_msgs::PointCloud2>(topic, 10, &ROSPointCloudRangeDevice::processPointCloud2, this);
+  //sub = nh.subscribe<sensor_msgs::PointCloud2>(topic, 10, &ROSPointCloudRangeDevice::processPointCloud2, this);
+  tfMsgFilter.registerCallback(boost::bind(&ROSPointCloudRangeDevice::processPointCloud2, this, _1));
+  sub.subscribe(nh, topic, 10);
+
 
   ROS_INFO_NAMED("rosarnl_node::ROSPointCloudRangeDevice", "rosarnl_node: Subscribed to sensor point cloud data from \"%s\" topic, sensor tf frame = \"%s\", global tf frame (should match ARNL map frame) = \"%s\"", topic.c_str(), sensor_tfname.c_str(), global_tfname.c_str());
 
@@ -62,12 +66,13 @@ void ROSPointCloudRangeDevice::processPointCloud2(const sensor_msgs::PointCloud2
   sensor_msgs::PointCloud2 pct;
 
   try {
-    geometry_msgs::TransformStamped transform = tfBuffer.lookupTransform(sensor_tfname, global_tfname, t, ros::Duration(0.080));
+    geometry_msgs::TransformStamped transform = tfBuffer.lookupTransform(sensor_tfname, global_tfname, t, ros::Duration(0.1));
     // todo try map frame, if odom or map don't exist, use base_link then transform using aria below
     // todo catch exceptions
     tf2::doTransform(*pc, pct, transform);
   } catch (tf2::TransformException &e) {
     ROS_WARN_NAMED("rosarnl_node::ROSPointCloudRangeDevice", "rosarnl_node: Error transforming pointcloud data from sensor frame \"%s\" to global frame \"%s\": %s. Skipping this message.", sensor_tfname.c_str(), global_tfname.c_str(), e.what());
+    unlockDevice();
     return;
   }
 
