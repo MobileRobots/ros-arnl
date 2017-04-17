@@ -11,6 +11,8 @@
 #include "ArnlSystem.h"
 #include <rosarnl/BatteryStatus.h>
 #include <rosarnl/BumperState.h>
+#include <rosarnl/LoadMapFile.h>
+
 #include "LaserPublisher.h"
 
 #include <ros/ros.h>
@@ -60,12 +62,14 @@ class RosArnlNode
     ros::ServiceServer wander_srv;
     ros::ServiceServer stop_srv;
     ros::ServiceServer dock_srv;
+    ros::ServiceServer map_srv;
 
     bool enable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool disable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool map_cb(rosarnl::LoadMapFile::Request& request, rosarnl::LoadMapFile::Response& response);
 
     ros::Publisher motors_state_pub;
     std_msgs::Bool motors_state;
@@ -302,6 +306,8 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   dock_srv = n.advertiseService("dock", &RosArnlNode::dock_cb, this);
 
   global_localization_srv = n.advertiseService("global_localization", &RosArnlNode::global_localization_srv_cb, this);
+
+  map_srv = n.advertiseService("load_map_file", &RosArnlNode::map_cb, this);
 
   initialpose_sub = n.subscribe("initialpose", 1, (boost::function <void(const geometry_msgs::PoseWithCovarianceStampedConstPtr&)>) boost::bind(&RosArnlNode::initialpose_sub_cb, this, _1));
 
@@ -596,6 +602,16 @@ bool RosArnlNode::global_localization_srv_cb(std_srvs::Empty::Request& request, 
   if(! arnl.locTask->localizeRobotAtHomeBlocking() )
     ROS_WARN_NAMED("rosarnl_node", "rosarnl_node: Error in initial localization.");
   return true;
+}
+
+bool RosArnlNode::map_cb(rosarnl::LoadMapFile::Request& request, rosarnl::LoadMapFile::Response& response)
+{
+  ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Load new map file service request with file name \"%s\" received...", request.filename.c_str());
+  if(!arnl.map) return false;
+  char msg[256];
+  bool r = arnl.map->readFile(request.filename.c_str(), msg, 256);
+  response.message = msg;
+  return r;
 }
 
 

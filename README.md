@@ -75,8 +75,15 @@ Properties in rviz.
    the `amcl` node, which tries many possible positions across whole map.)
  * `/rosarnl_node/current_goal`: ARNL's most recently requested goal point, as a Pose.
  * `/rosarnl_node/arnl_path_state`: String name indicating changes to the the ARNL path planner internal  state. See `ArPathPlanningInterface::getState` in the ARNL API Reference documentation
+ * `/rosarnl_node/load_map_file`: Service which loads a new map file. This is a
+   shortcut to modifying the ARNL configuration with the new file name.  Provide
+   a string with the service request containing the file name of the map
+   relative to ARNL's map directory (currently fixed at `/usr/local/Arnl/examples`
+   but may be changed in the future) on the system running `rosarnl_node`.
+   For example, using `rosservice` on the command line: 
+   `rosservice call /rosarnl_node/load_map_file columbia.map`
 
-The rosarnl node dosen't provide map data. This may be added
+The rosarnl node dosen't provide map data directly. This may be added
 in the future.
 
 ### Jog Position mode
