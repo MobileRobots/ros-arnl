@@ -13,7 +13,13 @@ for 1.9.2 can be found at
 <http://robots.mobilerobots.com/BaseArnl/download/prerelease>.
 
 To build, check out the repository in the `src` subdirectory of your ROS
-(catkin) workspace.  Run `catkin_make` from the workspace directory.
+(catkin) workspace.  `ros-arnl` depends on several ROS packages including 
+`nav_msgs`, `geometry_msgs`, `tf`, `move_base_msgs`, `actionlib`, and
+`actionlib_msgs`. To install these automatically, run `rosdep update`,
+then run `rosdep install rosarnl`.   (You may need to import the ROS
+development environment to your shell first by running `. devel/setup.bash`
+from your catkin workspace directory.)
+Run `catkin_make --pkg rosarnl` from the workspace directory to build.
 
 To run `rosarnl_node`, use rosrun: `rosrun rosarnl rosarnl_node`. It will
 connect to the robot and begin running.  
