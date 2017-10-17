@@ -52,10 +52,10 @@ class RosArnlNode
 
     ArFunctorC<RosArnlNode> myPublishCB;
 
-    ArPose rosPoseToArPose(const geometry_msgs::Pose& p);
-    ArPose rosPoseToArPose(const geometry_msgs::PoseStamped& p) { return rosPoseToArPose(p.pose); }
-    ArPoseWithTime rosPoseStampedToArPoseWithTime(const geometry_msgs::PoseStamped& p); 
-    geometry_msgs::Pose rosPoseToArPose(const ArPose& arpose);
+    static ArPose rosPoseToArPose(const geometry_msgs::Pose& p);
+    static ArPose rosPoseToArPose(const geometry_msgs::PoseStamped& p) { return rosPoseToArPose(p.pose); }
+    static ArPoseWithTime rosPoseStampedToArPoseWithTime(const geometry_msgs::PoseStamped& p);
+    static geometry_msgs::Pose arPoseToRosPose(const ArPose& arpose);
 
     ros::ServiceServer enable_srv;
     ros::ServiceServer disable_srv;
@@ -629,7 +629,8 @@ ArPose RosArnlNode::rosPoseToArPose(const geometry_msgs::Pose& p)
   return ArPose( p.position.x * 1000.0, p.position.y * 1000.0, tf::getYaw(p.orientation) / (M_PI/180.0) );
 }
 
-geometry_msgs::Pose arPoseToRosPose(const ArPose& arpose)
+
+geometry_msgs::Pose RosArnlNode::arPoseToRosPose(const ArPose& arpose)
 {
   // TODO use tf::poseTFToMsg instead?
   geometry_msgs::Pose rospose;
