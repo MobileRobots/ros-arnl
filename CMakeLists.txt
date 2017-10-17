@@ -28,6 +28,7 @@ add_message_files(
 add_service_files(
   FILES
   LoadMapFile.srv
+  MakePlan.srv
 )
 
 add_action_files(

@@ -12,6 +12,7 @@
 #include <rosarnl/BatteryStatus.h>
 #include <rosarnl/BumperState.h>
 #include <rosarnl/LoadMapFile.h>
+#include <rosarnl/MakePlan.h>
 
 #include "LaserPublisher.h"
 
@@ -63,12 +64,14 @@ class RosArnlNode
     ros::ServiceServer stop_srv;
     ros::ServiceServer dock_srv;
     ros::ServiceServer map_srv;
+    ros::ServiceServer plan_srv;
 
     bool enable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool disable_motors_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool wander_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool stop_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
     bool dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool make_plan_cb(rosarnl::MakePlan::Request& request, rosarnl::MakePlan::Response& response);
     bool map_cb(rosarnl::LoadMapFile::Request& request, rosarnl::LoadMapFile::Response& response);
 
     ros::Publisher motors_state_pub;
@@ -304,6 +307,7 @@ RosArnlNode::RosArnlNode(ros::NodeHandle nh, ArnlSystem& arnlsys)  :
   wander_srv = n.advertiseService("wander", &RosArnlNode::wander_cb, this);
   stop_srv = n.advertiseService("stop", &RosArnlNode::stop_cb, this);
   dock_srv = n.advertiseService("dock", &RosArnlNode::dock_cb, this);
+  plan_srv = n.advertiseService("make_plan", &RosArnlNode::make_plan_cb, this);
 
   global_localization_srv = n.advertiseService("global_localization", &RosArnlNode::global_localization_srv_cb, this);
 
@@ -592,6 +596,21 @@ bool RosArnlNode::dock_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Re
     if(check_estop("dock"))
       return false;
     arnl.modeDock->dock();
+    return true;
+}
+
+bool RosArnlNode::make_plan_cb(rosarnl::MakePlan::Request& request, rosarnl::MakePlan::Response& response)
+{
+    ArPose from, to;
+    std::list<ArPose> path;
+
+    ROS_INFO_NAMED("rosarnl_node", "rosarnl_node: Make plan request.");
+
+    from = arnl.robot->getPose();
+    to   = rosPoseToArPose(request.goal);
+    path = arnl.pathTask->getPathFromTo(from, to, true, NULL);
+    std::transform(path.begin(), path.end(), std::back_inserter(response.path), arPoseToRosPose);
+
     return true;
 }
 
