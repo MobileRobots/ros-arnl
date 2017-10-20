@@ -88,6 +88,7 @@ Properties in rviz.
    but may be changed in the future) on the system running `rosarnl_node`.
    For example, using `rosservice` on the command line: 
    `rosservice call /rosarnl_node/load_map_file columbia.map`
+ * `/rosarnl_node/make_plan`: Service which plans a path to the given goal goal point, but which does not start driving the robot on that path.  A point sequence representing the path is returned.  This plan will not incorporate sensed obstacles, just static map data.  
 
 The rosarnl node dosen't provide map data directly. This may be added
 in the future.
